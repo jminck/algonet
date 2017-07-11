@@ -7,7 +7,7 @@
 //------- P E R F O R M A N C E   P A R A M E T E R S -------
 Backtest.Configuration.UseWeekly=true;
 Backtest.Configuration.UseQuarterly=true;
-Backtest.Configuration.MaxExpirationDTE=35;
+Backtest.Configuration.MaxExpirationDTE=45;
 
 if (Backtest.UnderlyingSymbol=="SPX")
 {
@@ -17,8 +17,8 @@ if (Backtest.UnderlyingSymbol=="SPX")
 
 
 //------- O P T I M I Z A T I O N   P A R A M E T E R S -------
-int PARAM_NearMonth=25;
-int PARAM_FarMonth=35;
+int PARAM_NearMonth=39;
+int PARAM_FarMonth=44;
 int PARAM_WingWidth=50;
 int PARAM_NumberOfContracts=10;
 int PARAM_AdjustUpMoveLimit=80;
