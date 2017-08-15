@@ -12,17 +12,18 @@ Backtest.Configuration.MaxExpirationDTE=45;
 if (Backtest.UnderlyingSymbol=="SPX")
 {
 		Backtest.Configuration.PriceValidation.PositionConfirmationCount=4;
-		Backtest.Configuration.PriceValidation.PositionPercChange=10;
+		Backtest.Configuration.PriceValidation.PositionPercChange=8;
 }
+
 
 
 //------- O P T I M I Z A T I O N   P A R A M E T E R S -------
 int PARAM_NearMonth=39;
 int PARAM_FarMonth=44;
 int PARAM_WingWidth=50;
-int PARAM_NumberOfContracts=10;
-int PARAM_AdjustUpMoveLimit=80;
-int PARAM_AdjustDownMoveLimit=80;
+int PARAM_NumberOfContracts=50;
+int PARAM_AdjustUpMoveLimit=75;
+int PARAM_AdjustDownMoveLimit=75;
 int PARAM_ProfitTarget=15;
 int PARAM_MaxLoss=15;
 int PARAM_ExitDTE=5;
@@ -30,19 +31,65 @@ int PARAM_ExitDTE=5;
 //------- E N T R Y   R U L E S -------
 if(Position.IsOpen==false) {
 
+	Backtest.Tag = Backtest.TradingDateTime.Date;
+
     //Find the month expiration cycle
     var monthExpiration=GetExpiryByDTE(PARAM_NearMonth, PARAM_FarMonth);
     if (monthExpiration == null) return;   // Haven't found an expiration matching our criteria
 
     //Create a new Model Position and build an ATM Butterfly using the expiration cycles we found above.
     var modelPosition=NewModelPosition();
-    modelPosition.AddButterfly(ATM, PARAM_WingWidth, Buy, Put, PARAM_NumberOfContracts, monthExpiration);
+	modelPosition.AddButterfly(ATM, PARAM_WingWidth, Buy, Put, PARAM_NumberOfContracts, monthExpiration);
 	modelPosition.ClearLeg("LongLegUpper-" + Position.Adjustments);
 	var legAsym=CreateModelLeg(BUY,PARAM_NumberOfContracts, GetOptionByStrike(Put, Underlying.Last+40, monthExpiration, true),"LongLegUpper-" + Position.Adjustments);
 	modelPosition.AddLeg(legAsym);
 
-    //Flatten Deltas by buying a single call option with the closest delta.
-    var leg=CreateModelLeg(BUY,1, GetOptionByDelta(Call, -modelPosition.Delta, monthExpiration),"FlattenDeltaLeg-" + Position.Adjustments);
+
+    //Flatten Deltas by buying call option(s) with the closest delta.
+	double strike=modelPosition.Delta;
+	int quantity=1;
+	double delta=-70;
+	WriteLog("Trade initiation flatten deltas entry point");
+	WriteLog("modelPosition.Delta: " + modelPosition.Delta + " max delta per contract: " + delta);
+	if (modelPosition.Delta <=  delta)
+	{
+		WriteLog("Deltas below -70");
+
+		if (modelPosition.Delta >= delta*2)
+		{
+			WriteLog("Deltas above -140");
+			strike = modelPosition.Delta / 2;
+			quantity = 2;
+		}
+		else if (modelPosition.Delta >= delta*3)
+		{
+			WriteLog("Deltas above -210");
+			strike = modelPosition.Delta / 3;
+			quantity = 3;
+		}
+		else if (modelPosition.Delta >= delta*4)
+		{
+			WriteLog("Deltas above -280");
+			strike = modelPosition.Delta / 4;
+			quantity = 4;
+		}
+		else if (modelPosition.Delta >= delta*5)
+		{
+			WriteLog("Deltas above -350");
+			strike = modelPosition.Delta / 5;
+			quantity = 5;
+		}
+		else if (modelPosition.Delta >= delta*6)
+		{
+			WriteLog("Deltas above -420");
+			strike = modelPosition.Delta / 6;
+			quantity = 6;
+		}
+	}
+
+	WriteLog("Deltas to cut: " + modelPosition.Delta + " Strike: " + strike + " quantity: " + quantity);
+
+    var leg=CreateModelLeg(BUY,quantity, GetOptionByDelta(Call, -strike, monthExpiration),"FlattenDeltaLeg-" + Position.Adjustments);
     modelPosition.AddLeg(leg);
 
 	WriteLog("LegName: " + leg.LegName + " LegStike: " + leg.Strike + " LegQty: " + leg.Qty + " Expiry: " + leg.Expiry + " Tag: " + leg.Tag);
@@ -90,8 +137,52 @@ try
 
 				WriteLog("modelPosition.Delta: " + modelPosition.Delta);
 
-	            //Flatten Deltas by buying a single call option with the closest delta.
-	            var leg2=CreateModelLeg(BUY,1, GetOptionByDelta(Call,-modelPosition.Delta, monthExpiry),"FlattenDeltaLeg-" + (Position.Adjustments + 1));
+			    //Flatten Deltas by buying call option(s) with the closest delta.
+				double strike=modelPosition.Delta;
+				int quantity=1;
+				double delta=-70;
+				WriteLog("Upper adjustment point flatten deltas entry");
+				WriteLog("modelPosition.Delta: " + modelPosition.Delta + " max delta per contract: " + delta);
+				if (modelPosition.Delta <=  delta)
+				{
+					WriteLog("Deltas below -70");
+
+					if (modelPosition.Delta >= delta*2)
+					{
+						WriteLog("Deltas above -140");
+						strike = modelPosition.Delta / 2;
+						quantity = 2;
+					}
+					else if (modelPosition.Delta >= delta*3)
+					{
+						WriteLog("Deltas above -210");
+						strike = modelPosition.Delta / 3;
+						quantity = 3;
+					}
+					else if (modelPosition.Delta >= delta*4)
+					{
+						WriteLog("Deltas above -280");
+						strike = modelPosition.Delta / 4;
+						quantity = 4;
+					}
+					else if (modelPosition.Delta >= delta*5)
+					{
+						WriteLog("Deltas above -350");
+						strike = modelPosition.Delta / 5;
+						quantity = 5;
+					}
+					else if (modelPosition.Delta >= delta*6)
+					{
+						WriteLog("Deltas above -420");
+						strike = modelPosition.Delta / 6;
+						quantity = 6;
+					}
+				}
+
+
+				WriteLog("Deltas to cut: " + modelPosition.Delta + " Strike: " + strike + " quantity: " + quantity);
+
+	            var leg2=CreateModelLeg(BUY,quantity, GetOptionByDelta(Call,-strike, monthExpiry),"FlattenDeltaLeg-" + (Position.Adjustments + 1));
 	            modelPosition.AddLeg(leg2);
 
 	            //Close all legs of the farthest away Butterfly
@@ -134,8 +225,39 @@ try
 	            var monthExpiry=GetExpiryByDTE(Position.GetLegByName(legName).DTE);
 	            modelPosition.AddButterfly(ATM, PARAM_WingWidth,Position.GetLegByName("LongLegLower-" + adjustmentID).Transaction, Position.GetLegByName("LongLegLower-" + adjustmentID).Type, PARAM_NumberOfContracts, monthExpiry);
 
-	            //Flatten Deltas by buying a single call option with the closest delta.
-	            var leg2=CreateModelLeg(BUY,1, GetOptionByDelta(Call,-modelPosition.Delta, monthExpiry),"FlattenDeltaLeg-" + (Position.Adjustments + 1));
+			    //Flatten Deltas by buying call option(s) with the closest delta.
+				double strike=modelPosition.Delta;
+				int quantity=1;
+				double delta=70;
+				WriteLog("Lower adjustment point flatten deltas entry");
+				WriteLog("modelPosition.Delta: " + modelPosition.Delta + " max delta per contract: " + delta);
+				if (modelPosition.Delta >  delta)
+				{
+					WriteLog("Deltas over 70");
+					delta=140.0;
+					if (modelPosition.Delta < delta*2)
+					{
+						WriteLog("Deltas below 140");
+						strike = modelPosition.Delta / 2;
+						quantity = 2;
+					}
+					else if (modelPosition.Delta < delta*3)
+					{
+						WriteLog("Deltas below 210");
+						strike = modelPosition.Delta / 3;
+						quantity = 3;
+					}
+					else if (modelPosition.Delta < delta*4)
+					{
+						WriteLog("Deltas below 280");
+						strike = modelPosition.Delta / 4;
+						quantity = 4;
+					}
+				}
+
+				WriteLog("Deltas to cut: " + modelPosition.Delta + " Strike: " + strike + " quantity: " + quantity);
+
+	            var leg2=CreateModelLeg(BUY,quantity, GetOptionByDelta(Call,-strike, monthExpiry),"FlattenDeltaLeg-" + (Position.Adjustments + 1));
 				WriteLog("Flatten Deltas - LegName: " + leg2.LegName + " LegStike: " + leg2.Strike + " LegQty: " + leg2.Qty + " Expiry: " + leg2.Expiry + " Tag: " + leg2.Tag);
 	            modelPosition.AddLeg(leg2);
 
