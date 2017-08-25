@@ -1,0 +1,181 @@
+﻿<?xml version="1.0" encoding="iso-8859-1" ?>
+
+<AlgoNETExplorer>
+    <StrategyCode StrategyName="60-40-20_ScalableMargin" Language="C# .NET">
+        <TickEventCode>//
+// Copyright THJ Systems Ltd
+//
+//------- D E S C R I P T I O N -------
+//
+
+
+//------- P E R F O R M A N C E   P A R A M E T E R S -------
+Backtest.Configuration.UseWeekly=true;
+Backtest.Configuration.UseQuarterly=true;
+Backtest.Configuration.MaxExpirationDTE=70;
+
+if (Backtest.UnderlyingSymbol==&quot;SPX&quot;)
+{
+		Backtest.Configuration.PriceValidation.PositionConfirmationCount=3;
+		Backtest.Configuration.PriceValidation.PositionPercChange=5;
+}
+
+//------- O P T I M I Z A T I O N   P A R A M E T E R S -------
+int PARAM_NearMonth=60;
+int PARAM_FarMonth=70;
+int PARAM_NumberOfContracts=10;
+int PARAM_ProfitTarget=6;
+int PARAM_MaxLoss=8;
+int PARAM_ExitDTE=30;
+int PARAM_DeltaAdjustTriggerOffset=10;
+//initial delta of short strike 
+int PARAM_DeltaTarget=40;
+
+//max underlying IV when initiating a trade
+int PARAM_MaxUnderlyingIV=25;
+
+//fixed margin to calculate number of lots from
+int PARAM_MaxMargin=50000;
+
+//entry rules for market condition
+double PARAM_UnderlyingMovementSDdown=-1.5;
+double PARAM_UnderlyingMovementSDup=1.5;
+int PARAM_UnderlyingMovementSDDays=3;
+int newmargin=0;
+	
+//approximate 50% increase in size each year
+int yearcount = Backtest.TradingDateTime.Year - 2010;
+if (Backtest.TradingDateTime.Year &gt; 2011) {
+	newmargin=(PARAM_MaxMargin * yearcount) / 2;
+	WriteLog(&quot;yearcount=&quot; + yearcount + &quot; newmargin=&quot; + newmargin);
+	PARAM_MaxMargin=newmargin;
+}
+
+//------- E N T R Y   R U L E S -------
+if(Position.IsOpen==false) {
+
+	
+    //Check if underlying movement within entry SD limits
+    double maxSDup=0.0;
+    double maxSDdown=0.0;
+    GetMaxSDMovement(PARAM_UnderlyingMovementSDDays, ref maxSDup, ref maxSDdown);
+    if (maxSDup &gt; PARAM_UnderlyingMovementSDup) 
+	{
+
+    //Check Time is 8:30 AM otherwise this logs every 5 min but SD value is static for the entire day
+    if (Backtest.TradingDateTime.ToLocalTime().TimeOfDay == new TimeSpan(15, 00, 0)) {        //Convert from UTC to localtime
+        WriteLog(&quot;SD Up exceeded: maxSDup = &quot; + maxSDup );
+		return;         // Max SD on upside exceeded
+	}
+	}
+    if (maxSDdown &lt; PARAM_UnderlyingMovementSDdown) 
+		{
+    //Check Time is 8:30 AM otherwise this logs every 5 min but SD value is static for the entire day
+    if (Backtest.TradingDateTime.ToLocalTime().TimeOfDay == new TimeSpan(15, 00, 0)) {        //Convert from UTC to localtime
+		WriteLog(&quot;SD Down exceeded: maxSDdown = &quot; + maxSDdown );
+		return;     // Max SD on downside exceeded
+	}
+	}
+	
+	//DO not initiate if the market is going haywire
+	if (Underlying.IV &lt;= PARAM_MaxUnderlyingIV) {
+	
+	    //Do not initiaate a trade before 9:00 AM
+	    TimeSpan currentTime=Backtest.TradingDateTime.ToLocalTime().TimeOfDay;		        //Convert from UTC to localtime
+	    TimeSpan startTime = new TimeSpan(9, 0, 0); 							            //10:00 AM
+	    TimeSpan endTime = new TimeSpan(15, 0, 0); 							            //1:30 PM
+	    if ((currentTime &gt;= startTime) &amp;&amp; (currentTime &lt;= endTime)) {
+        
+		    //Find the month expiration cycle
+		    var monthExpiration=GetExpiryByDTE(PARAM_NearMonth, PARAM_FarMonth);
+		    if (monthExpiration == null) return;   // Haven&apos;t found an expiration matching our criteria
+
+	                //Create a new Model Position and build an ATM Butterfly using the expiration cycles we found above.
+	                var modelPosition=NewModelPosition();
+	                var legAsym1=CreateModelLeg(BUY,1, GetOptionByDelta(Put, -60, monthExpiration),&quot;LongLegUpper-&quot; + Position.Adjustments);
+	                modelPosition.AddLeg(legAsym1);
+	                var legAsym2=CreateModelLeg(SELL,2, GetOptionByDelta(Put, -40, monthExpiration),&quot;ShortLeg-&quot; + Position.Adjustments);
+	                modelPosition.AddLeg(legAsym2);
+	                var legAsym3=CreateModelLeg(BUY,1, GetOptionByDelta(Put, -20, monthExpiration),&quot;LongLegLower-&quot; + Position.Adjustments);
+	                modelPosition.AddLeg(legAsym3);
+					modelPosition.CommitTrade(&quot;Buy 40-30-15 Butterfly 1 lot&quot;);
+
+					//determine margin of a 1 lot so we can figure out how many lots to put on
+					double nl = PARAM_MaxMargin / Position.Margin;
+					int numLots = (int) nl;				
+	                WriteLog(&quot;numLots: &quot; + numLots);
+					var modelPosition2=NewModelPosition();
+	                legAsym1=CreateModelLeg(BUY,numLots, GetOptionByDelta(Put, -60, monthExpiration),&quot;LongLegUpper-&quot; + Position.Adjustments);
+	                modelPosition2.AddLeg(legAsym1);
+	                legAsym2=CreateModelLeg(SELL,numLots*2, GetOptionByDelta(Put, -40, monthExpiration),&quot;ShortLeg-&quot; + Position.Adjustments);
+	                modelPosition2.AddLeg(legAsym2);
+	                legAsym3=CreateModelLeg(BUY,numLots, GetOptionByDelta(Put, -20, monthExpiration),&quot;LongLegLower-&quot; + Position.Adjustments);
+	                modelPosition2.AddLeg(legAsym3);				
+	                  
+	                //Commit the Model Position to the Trade Log and add a comment
+	                modelPosition2.CommitTrade(&quot;Buy 40-30-15 Butterfly number of lots: &quot; + numLots );
+	                WriteLog(&quot;Trade Entry - IV: &quot; + Underlying.IV);
+			
+		    //Commit the Model Position to the Trade Log and add a comment
+		    modelPosition.CommitTrade(&quot;Buy 60-40-20 Butterfly&quot;);
+			WriteLog(&quot;Trade Entry - IV: &quot; + Underlying.IV);
+		}
+ 	}
+	else
+	{
+		WriteLog(&quot;Not initiating a trade because Underlying.IV = &quot; + Underlying.IV + &quot; and max is 25&quot;);
+	}
+}
+
+//------- A D J U S T M E N T   R U L E S -------
+try
+{
+//------- A D J U S T M E N T   R U L E S -------
+if(Position.IsOpen==true) {
+
+    //Check if Short Strike Delta&apos;s within tollerance
+    var origShortLeg=Position.GetLegByName(&quot;ShortLeg*&quot;);
+    if (origShortLeg!=null) {
+        double delta=Math.Abs(origShortLeg.Delta);
+        double deltaTarget=-PARAM_DeltaTarget;
+		WriteLog(&quot;Upside Check - delta: &quot; + delta + &quot; PARAM_DeltaTarget: &quot; + (PARAM_DeltaTarget - PARAM_DeltaAdjustTriggerOffset) );
+        if (delta &lt; PARAM_DeltaTarget - PARAM_DeltaAdjustTriggerOffset) {
+			WriteLog(&quot;Close: Delta change (Upside)&quot;);
+            Position.Close(&quot;Close: Delta change (Upside)&quot;);
+        }
+    }
+    //Check if Short Strike Delta&apos;s within tollerance
+    if (origShortLeg!=null) {
+        double delta=Math.Abs(origShortLeg.Delta);
+        double deltaTarget=PARAM_DeltaTarget;
+		WriteLog(&quot;Downside Check - delta: &quot; + delta + &quot; PARAM_DeltaTarget: &quot; + (PARAM_DeltaTarget + PARAM_DeltaAdjustTriggerOffset) );
+        if (delta&gt;PARAM_DeltaTarget + PARAM_DeltaAdjustTriggerOffset) {
+			WriteLog(&quot;Close: Delta change (Downside)&quot;);
+            Position.Close(&quot;Close: Delta change (Downside)&quot;);
+        }
+    }
+}
+}
+catch(Exception ex)
+{
+	WriteLog(&quot;Try/Catch hit&quot;);	
+}
+
+//------- E X I T   R U L E S -------
+if(Position.IsOpen==true) {
+
+    //Check Profit Target
+    if(Position.PnLPercentage &gt;= PARAM_ProfitTarget) Position.Close(&quot;Hit Profit Target&quot;);
+
+    //Check Max Loss
+    if(Position.PnLPercentage &lt;= -PARAM_MaxLoss) Position.Close(&quot;Hit Max Loss&quot;);
+
+    //Check Minimum DTE
+    if(Position.DTE &lt;= PARAM_ExitDTE) Position.Close(&quot;Hit Minimum DTE&quot;);
+
+    //Check Max Adjustments
+    if(Position.Adjustments &gt;= 10) Position.Close(&quot;Hit Max Adjustments&quot;);
+
+}</TickEventCode>
+    </StrategyCode>
+</AlgoNETExplorer>

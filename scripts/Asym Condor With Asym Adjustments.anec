@@ -1,0 +1,330 @@
+﻿<?xml version="1.0" encoding="iso-8859-1" ?>
+
+<AlgoNETExplorer>
+    <StrategyCode StrategyName="Asym Condor With Asym Adjustments" Language="C# .NET">
+        <TickEventCode>//
+// Copyright THJ Systems Ltd
+//
+//------- D E S C R I P T I O N -------
+//
+
+//------- P E R F O R M A N C E   P A R A M E T E R S -------
+Backtest.Configuration.UseWeekly=true;
+Backtest.Configuration.UseQuarterly=true;
+Backtest.Configuration.MaxExpirationDTE=45;
+
+if (Backtest.UnderlyingSymbol==&quot;SPX&quot;)
+{
+		Backtest.Configuration.PriceValidation.PositionConfirmationCount=4;
+		Backtest.Configuration.PriceValidation.PositionPercChange=5;
+}
+
+
+
+//------- O P T I M I Z A T I O N   P A R A M E T E R S -------
+int PARAM_NearMonth=39;
+int PARAM_FarMonth=44;
+int PARAM_WingWidth=50;
+int PARAM_NumberOfContracts=50;
+int PARAM_AdjustUpMoveLimit=75;
+int PARAM_AdjustDownMoveLimit=75;
+int PARAM_ProfitTarget=15;
+int PARAM_MaxLoss=15;
+int PARAM_ExitDTE=5;
+int adjustmentCount=0;
+	
+//------- E N T R Y   R U L E S -------
+if(Position.IsOpen==false) {
+
+	Backtest.Tag = Backtest.TradingDateTime.Date;
+	
+    //Find the month expiration cycle
+    var monthExpiration=GetExpiryByDTE(PARAM_NearMonth, PARAM_FarMonth);
+    if (monthExpiration == null) return;   // Haven&apos;t found an expiration matching our criteria
+
+    //Create a new Model Position and build an ATM Butterfly using the expiration cycles we found above.
+    var modelPosition=NewModelPosition();
+	modelPosition.AddButterfly(ATM, PARAM_WingWidth, Buy, Put, PARAM_NumberOfContracts, monthExpiration);
+	modelPosition.ClearLeg(&quot;LongLegUpper-&quot; + Position.Adjustments);
+	var legAsym=CreateModelLeg(BUY,PARAM_NumberOfContracts, GetOptionByStrike(Put, Underlying.Last+40, monthExpiration, true),&quot;LongLegUpper-&quot; + Position.Adjustments);
+	modelPosition.AddLeg(legAsym);
+
+	
+    //Flatten Deltas by buying call option(s) with the closest delta.
+	double strike=modelPosition.Delta;
+	int quantity=1;
+	double delta=-70;
+	WriteLog(&quot;Trade initiation flatten deltas entry point&quot;);
+	WriteLog(&quot;modelPosition.Delta: &quot; + modelPosition.Delta + &quot; max delta per contract: &quot; + delta);
+	if (modelPosition.Delta &lt;=  delta)
+	{
+		WriteLog(&quot;Deltas below -70&quot;);
+		
+		if (modelPosition.Delta &gt;= delta*2)
+		{
+			WriteLog(&quot;Deltas above -140&quot;);
+			strike = modelPosition.Delta / 2;
+			quantity = 2;
+		}
+		else if (modelPosition.Delta &gt;= delta*3)
+		{
+			WriteLog(&quot;Deltas above -210&quot;);
+			strike = modelPosition.Delta / 3;
+			quantity = 3;
+		}
+		else if (modelPosition.Delta &gt;= delta*4)
+		{
+			WriteLog(&quot;Deltas above -280&quot;);
+			strike = modelPosition.Delta / 4;
+			quantity = 4;
+		}		
+		else if (modelPosition.Delta &gt;= delta*5)
+		{
+			WriteLog(&quot;Deltas above -350&quot;);
+			strike = modelPosition.Delta / 5;
+			quantity = 5;
+		}
+		else if (modelPosition.Delta &gt;= delta*6)
+		{
+			WriteLog(&quot;Deltas above -420&quot;);
+			strike = modelPosition.Delta / 6;
+			quantity = 6;
+		}
+	}
+	
+	WriteLog(&quot;Deltas to cut: &quot; + modelPosition.Delta + &quot; Strike: &quot; + strike + &quot; quantity: &quot; + quantity);
+		
+    var leg=CreateModelLeg(BUY,quantity, GetOptionByDelta(Call, -strike, monthExpiration),&quot;FlattenDeltaLeg-&quot; + Position.Adjustments);
+    modelPosition.AddLeg(leg);
+
+	WriteLog(&quot;LegName: &quot; + leg.LegName + &quot; LegStike: &quot; + leg.Strike + &quot; LegQty: &quot; + leg.Qty + &quot; Expiry: &quot; + leg.Expiry + &quot; Tag: &quot; + leg.Tag);
+
+    //Commit the Model Position to the Trade Log and add a comment
+    modelPosition.CommitTrade(&quot;Buy ATM Butterfly&quot;);
+}
+
+//------- A D J U S T M E N T   R U L E S -------
+try
+{
+	if(Position.IsOpen==true) {
+
+		//WriteLog(&quot;Entered Adjustment Rules&quot;);
+
+	    //Check if Underlying moved outside of BreakEven limit
+	    var midBE = (Position.Expiration().LowerBE + Position.Expiration().UpperBE) / 2;
+		var targetLower = midBE - ((midBE - Position.Expiration().LowerBE) * PARAM_AdjustDownMoveLimit / 100);
+	    var targetUpper = midBE + ((Position.Expiration().UpperBE - midBE) * PARAM_AdjustUpMoveLimit / 100);
+		WriteLog(&quot;targetUpper: &quot; + targetUpper + &quot;targetLower: &quot; + targetLower + &quot;Underlying.Last&quot; + Underlying.Last);
+	    if (Underlying.Last &gt;= targetUpper) {
+	        //Find the farthest Butterfly away from underlying price and remember its adjustment number so we can reference it
+			adjustmentCount++;
+			WriteLog(&quot;Entered targetUpper - adjustmentCount: &quot; + adjustmentCount);
+	        double diff=0;
+	        double diffMax=0;
+	        string legName=null;
+	        foreach (IPositionLeg leg in Position.GetAllLegs()) {
+	            if(leg.LegName.StartsWith(&quot;ShortLeg&quot;)) {		//we&apos;re only looking for the ShortLeg of each Butterfly
+	                diff=leg.Strike - Underlying.Last;
+	                if (Math.Abs(diff) &gt; diffMax) {
+	                    diffMax=diff;
+	                    legName=leg.LegName;
+	                }
+	            }
+	        }
+	        if (legName!=null) {
+	            //Extract the adjustment number
+	            string adjustmentID=legName.Substring(legName.LastIndexOf(&quot;-&quot;) + 1);
+				WriteLog(&quot;adjustmentID: &quot; + adjustmentID);
+				
+	            //Create a new Model Position
+	            var modelPosition=NewModelPosition();
+
+	            //Add a new ATM Butterfly using the expiration cycle in Butterfly we are rolling
+	            var monthExpiry=GetExpiryByDTE(Position.GetLegByName(legName).DTE);
+	            modelPosition.AddButterfly(ATM, PARAM_WingWidth,Position.GetLegByName(&quot;LongLegLower-&quot; + adjustmentID).Transaction, Position.GetLegByName(&quot;LongLegLower-&quot; + adjustmentID).Type, PARAM_NumberOfContracts, monthExpiry);
+
+				WriteLog(&quot;modelPosition.Delta: &quot; + modelPosition.Delta);
+
+			    //Flatten Deltas by buying call option(s) with the closest delta.
+				double strike=modelPosition.Delta;
+				int quantity=1;
+				double delta=-70;
+				WriteLog(&quot;Upper adjustment point flatten deltas entry&quot;);
+				WriteLog(&quot;modelPosition.Delta: &quot; + modelPosition.Delta + &quot; max delta per contract: &quot; + delta);
+				if (modelPosition.Delta &lt;=  delta)
+				{
+					WriteLog(&quot;Deltas below -70&quot;);
+					
+					if (modelPosition.Delta &gt;= delta*2)
+					{
+						WriteLog(&quot;Deltas above -140&quot;);
+						strike = modelPosition.Delta / 2;
+						quantity = 2;
+					}
+					else if (modelPosition.Delta &gt;= delta*3)
+					{
+						WriteLog(&quot;Deltas above -210&quot;);
+						strike = modelPosition.Delta / 3;
+						quantity = 3;
+					}
+					else if (modelPosition.Delta &gt;= delta*4)
+					{
+						WriteLog(&quot;Deltas above -280&quot;);
+						strike = modelPosition.Delta / 4;
+						quantity = 4;
+					}		
+					else if (modelPosition.Delta &gt;= delta*5)
+					{
+						WriteLog(&quot;Deltas above -350&quot;);
+						strike = modelPosition.Delta / 5;
+						quantity = 5;
+					}
+					else if (modelPosition.Delta &gt;= delta*6)
+					{
+						WriteLog(&quot;Deltas above -420&quot;);
+						strike = modelPosition.Delta / 6;
+						quantity = 6;
+					}
+				}
+				
+				
+				WriteLog(&quot;Deltas to cut: &quot; + modelPosition.Delta + &quot; Strike: &quot; + strike + &quot; quantity: &quot; + quantity);
+
+	            var leg2=CreateModelLeg(BUY,quantity, GetOptionByDelta(Call,-strike, monthExpiry),&quot;FlattenDeltaLeg-&quot; + (Position.Adjustments + 1));
+	            modelPosition.AddLeg(leg2);
+
+				//if (adjustmentCount &gt;1)
+				//{
+	            //Close all legs of the farthest away Butterfly
+	            var leg=Position.GetLegByName(&quot;ShortLeg-&quot; + adjustmentID).CreateClosingModelLeg();
+				WriteLog(&quot;LegName:&quot; + leg.LegName + &quot; LegStike&quot; + leg.Strike + &quot; LegQty&quot; + leg.Qty + &quot; Expiry&quot; + leg.Expiry + &quot; Tag&quot; + leg.Tag);
+	            modelPosition.AddLeg(leg);
+	            leg=Position.GetLegByName(&quot;LongLegLower-&quot; + adjustmentID).CreateClosingModelLeg();
+				WriteLog(&quot;LegName:&quot; + leg.LegName + &quot; LegStike&quot; + leg.Strike + &quot; LegQty&quot; + leg.Qty + &quot; Expiry&quot; + leg.Expiry + &quot; Tag&quot; + leg.Tag);
+	            modelPosition.AddLeg(leg);
+	            leg=Position.GetLegByName(&quot;LongLegUpper-&quot; + adjustmentID).CreateClosingModelLeg();
+				WriteLog(&quot;LegName:&quot; + leg.LegName + &quot; LegStike&quot; + leg.Strike + &quot; LegQty&quot; + leg.Qty + &quot; Expiry&quot; + leg.Expiry + &quot; Tag&quot; + leg.Tag);
+	            modelPosition.AddLeg(leg);
+
+	            //Commit the Model Position to the Trade Log and add a comment
+	            modelPosition.CommitTrade(&quot;Roll ATM Butterfly (upside)&quot;);
+				//}
+	        }
+	    }
+	    if (Underlying.Last &lt;= targetLower) {
+	        //Find the farthest Butterfly away from underlying price and remember its adjustment number so we can reference it
+	        adjustmentCount++;
+			WriteLog(&quot;Entered targetLower - adjustmentCount: &quot; + adjustmentCount);
+			double diff=0;
+	        double diffMax=0;
+	        string legName=null;
+	        foreach (IPositionLeg leg in Position.GetAllLegs()) {
+	            if(leg.LegName.StartsWith(&quot;ShortLeg&quot;)) {		//we&apos;re only looking for the ShortLeg of each Butterfly
+	                diff=leg.Strike - Underlying.Last;
+	                if (Math.Abs(diff) &gt; diffMax) {
+	                    diffMax=diff;
+	                    legName=leg.LegName;
+	                }
+	            }
+	        }
+	        if (legName!=null) {
+	            //Extract the adjustment number
+	            string adjustmentID=legName.Substring(legName.LastIndexOf(&quot;-&quot;) + 1);
+
+	            //Create a new Model Position
+	            var modelPosition=NewModelPosition();
+
+	            //Add a new ATM Butterfly using the expiration cycle in Butterfly we are rolling
+	            var monthExpiry=GetExpiryByDTE(Position.GetLegByName(legName).DTE);
+	            modelPosition.AddButterfly(ATM, PARAM_WingWidth,Position.GetLegByName(&quot;LongLegLower-&quot; + adjustmentID).Transaction, Position.GetLegByName(&quot;LongLegLower-&quot; + adjustmentID).Type, PARAM_NumberOfContracts, monthExpiry);
+
+			    //Flatten Deltas by buying call option(s) with the closest delta.
+				double strike=modelPosition.Delta;
+				int quantity=1;
+				double delta=-70;
+				WriteLog(&quot;Lower adjustment point flatten deltas entry&quot;);
+				WriteLog(&quot;modelPosition.Delta: &quot; + modelPosition.Delta + &quot; max delta per contract: &quot; + delta);
+				if (modelPosition.Delta &lt;=  delta)
+				{
+					WriteLog(&quot;Deltas below -70&quot;);
+					
+					if (modelPosition.Delta &gt;= delta*2)
+					{
+						WriteLog(&quot;Deltas above -140&quot;);
+						strike = modelPosition.Delta / 2;
+						quantity = 2;
+					}
+					else if (modelPosition.Delta &gt;= delta*3)
+					{
+						WriteLog(&quot;Deltas above -210&quot;);
+						strike = modelPosition.Delta / 3;
+						quantity = 3;
+					}
+					else if (modelPosition.Delta &gt;= delta*4)
+					{
+						WriteLog(&quot;Deltas above -280&quot;);
+						strike = modelPosition.Delta / 4;
+						quantity = 4;
+					}		
+					else if (modelPosition.Delta &gt;= delta*5)
+					{
+						WriteLog(&quot;Deltas above -350&quot;);
+						strike = modelPosition.Delta / 5;
+						quantity = 5;
+					}
+					else if (modelPosition.Delta &gt;= delta*6)
+					{
+						WriteLog(&quot;Deltas above -420&quot;);
+						strike = modelPosition.Delta / 6;
+						quantity = 6;
+					}
+				}
+				
+				WriteLog(&quot;Deltas to cut: &quot; + modelPosition.Delta + &quot; Strike: &quot; + strike + &quot; quantity: &quot; + quantity);
+
+	            var leg2=CreateModelLeg(BUY,quantity, GetOptionByDelta(Call,-strike, monthExpiry),&quot;FlattenDeltaLeg-&quot; + (Position.Adjustments + 1));
+				WriteLog(&quot;Flatten Deltas - LegName: &quot; + leg2.LegName + &quot; LegStike: &quot; + leg2.Strike + &quot; LegQty: &quot; + leg2.Qty + &quot; Expiry: &quot; + leg2.Expiry + &quot; Tag: &quot; + leg2.Tag);
+	            modelPosition.AddLeg(leg2);
+
+	            //Close all legs of the farthest away Butterfly
+				// not working
+				//if (adjustmentCount &gt;1)
+				//{
+	            var leg=Position.GetLegByName(&quot;ShortLeg-&quot; + adjustmentID).CreateClosingModelLeg();
+	            modelPosition.AddLeg(leg);
+	            leg=Position.GetLegByName(&quot;LongLegLower-&quot; + adjustmentID).CreateClosingModelLeg();
+	            modelPosition.AddLeg(leg);
+	            leg=Position.GetLegByName(&quot;LongLegUpper-&quot; + adjustmentID).CreateClosingModelLeg();
+	            modelPosition.AddLeg(leg);
+
+	            //Commit the Model Position to the Trade Log and add a comment
+	            modelPosition.CommitTrade(&quot;Adjust Butterfly (downside)&quot;);
+				//}
+	        }
+	    }
+
+	}
+}
+catch(Exception ex)
+{
+	WriteLog(&quot;Try/Catch hit&quot;);
+}
+
+//------- E X I T   R U L E S -------
+if(Position.IsOpen==true) {
+
+    //Check Profit Target
+    if(Position.PnLPercentage &gt;= PARAM_ProfitTarget) Position.Close(&quot;Hit Profit Target&quot;);
+
+    //Check Max Loss
+    if(Position.PnLPercentage &lt;= -PARAM_MaxLoss) Position.Close(&quot;Hit Max Loss&quot;);
+
+    //Check Minimum DTE
+    if(Position.DTE &lt;= PARAM_ExitDTE) Position.Close(&quot;Hit Minimum DTE&quot;);
+
+    //Check Max Adjustments
+    if(Position.Adjustments &gt;= 5) Position.Close(&quot;Hit Max Adjustments&quot;);
+
+}</TickEventCode>
+    </StrategyCode>
+</AlgoNETExplorer>

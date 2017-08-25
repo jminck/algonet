@@ -1,0 +1,67 @@
+﻿<?xml version="1.0" encoding="iso-8859-1" ?>
+
+<AlgoNETExplorer>
+    <StrategyCode StrategyName="Weekly SPX Iron Condor - CodeGen" Language="C# .NET">
+        <TickEventCode>//
+// Copyright THJ Systems Ltd
+//
+//------- D E S C R I P T I O N -------
+//
+
+//------- P E R F O R M A N C E   P A R A M E T E R S -------
+Backtest.Configuration.UseWeekly=true;
+Backtest.Configuration.UseQuarterly=false;
+Backtest.Configuration.MaxExpirationDTE=18;
+
+//------- O P T I M I Z A T I O N   P A R A M E T E R S -------
+int PARAM_NearMonth=15;
+int PARAM_FarMonth=18;
+int PARAM_DeltaTarget=15;
+int PARAM_DeltaAdjustTriggerOffset=5;
+int PARAM_WingWidth=10;
+int PARAM_NumberOfContracts=20;
+int PARAM_ProfitTarget=10;
+int PARAM_MaxLoss=15;
+int PARAM_ExitDTE=3;
+
+//------- E N T R Y   R U L E S -------
+if(Position.IsOpen==false) {
+
+    //Find the month expiration cycle
+    var monthExpiration=GetExpiryByDTE(PARAM_NearMonth, PARAM_FarMonth);
+    if (monthExpiration == null) return;   // Haven&apos;t found an expiration matching our criteria
+
+    //Create a new Model Position and build Condor using the expiration cycles we found above.
+    var modelPosition=NewModelPosition();
+    if(modelPosition.AddCondor(PARAM_DeltaTarget, PARAM_WingWidth, Sell, CondorType.Iron, PARAM_NumberOfContracts, monthExpiration)==false) return;
+    modelPosition.Tag=&quot;Sell&quot;;
+
+    //Flatten Deltas by buying a single call option with the closest delta.
+    var leg=CreateModelLeg(Buy, 1, GetOptionByDelta(Call, -modelPosition.Delta, monthExpiration),&quot;FlattenDeltaLeg-&quot; + Position.Adjustments);
+    modelPosition.AddLeg(leg);
+
+    //Commit the Model Position to the Trade Log and add a comment
+    modelPosition.CommitTrade(modelPosition.Tag + &quot; Condor&quot;);
+}
+
+//------- A D J U S T M E N T   R U L E S -------
+//  NONE
+
+//------- E X I T   R U L E S -------
+if(Position.IsOpen==true) {
+
+    //Check Profit Target
+    if(Position.PnLPercentage &gt;= PARAM_ProfitTarget) Position.Close(&quot;Hit Profit Target&quot;);
+
+    //Check Max Loss
+    if(Position.PnLPercentage &lt;= -PARAM_MaxLoss) Position.Close(&quot;Hit Max Loss&quot;);
+
+    //Check Minimum DTE
+    if(Position.DTE &lt;= PARAM_ExitDTE) Position.Close(&quot;Hit Minimum DTE&quot;);
+
+    //Check Max Adjustments
+    if(Position.Adjustments &gt;= 5) Position.Close(&quot;Hit Max Adjustments&quot;);
+
+}</TickEventCode>
+    </StrategyCode>
+</AlgoNETExplorer>
