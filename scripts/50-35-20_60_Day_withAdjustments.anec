@@ -322,7 +322,6 @@ if (Position.IsOpen == true) {
 }
 } catch (Exception ex) {
  WriteLog(&quot;Try/Catch hit in adjustment block&quot;);
-}
-        </TickEventCode>
+}</TickEventCode>
     </StrategyCode>
 </AlgoNETExplorer>
