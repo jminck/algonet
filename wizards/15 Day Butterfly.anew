@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="iso-8859-1" ?>
+
+<AlgoNETExplorer>
+    <StrategyWizard StrategyName="15 Day Butterfly" StrategyType="Butterfly">
+        <Description />
+        <NumberOfContracts>20</NumberOfContracts>
+        <EntryConditions>
+            <DTE DTE1="15" DTE2="18" />
+            <UnderlyingMovementSD Checked="True" SD1="-1" SD2="1" Days="3" />
+            <FlattenDeltas Checked="True" />
+            <WingWidth>30</WingWidth>
+            <TradeAction Transaction="Buy" Type="Put Butterfly" />
+        </EntryConditions>
+        <AdjustmentConditions>
+            <UnderlyingMoveUp Checked="True" Value="75" Action="Add another ATM" />
+            <UnderlyingMoveDown Checked="True" Value="75" Action="Add another ATM" />
+        </AdjustmentConditions>
+        <ExitConditions>
+            <ProfitTarget Checked="True" Value="15" />
+            <MaxLoss Checked="True" Value="10" />
+            <DTE Checked="True" Value="5" />
+            <MaxAdjustments Checked="True" Value="5" />
+        </ExitConditions>
+    </StrategyWizard>
+</AlgoNETExplorer>

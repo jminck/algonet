@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="iso-8859-1" ?>
+
+<AlgoNETExplorer>
+    <StrategyWizard StrategyName="SPX 15 Day Iron Condor" StrategyType="Condor">
+        <Description />
+        <NumberOfContracts>50</NumberOfContracts>
+        <EntryConditions>
+            <DTE DTE1="14" DTE2="18" />
+            <UnderlyingMovementSD Checked="True" SD1="-1.3" SD2="1.3" Days="3" />
+            <ShortDelta>18</ShortDelta>
+            <WingWidth>10</WingWidth>
+            <FlattenPositionDeltas Checked="True" />
+            <TradeAction Transaction="Sell" Type="Iron Condor" />
+        </EntryConditions>
+        <AdjustmentConditions>
+            <UnderlyingMoveUp Checked="False" Value="75" Action="Roll out" />
+            <UnderlyingMoveDown Checked="False" Value="75" Action="Close Position" />
+            <ShortStrikeDeltaChangedUp Checked="True" Value="10" Action="Roll out" />
+            <ShortStrikeDeltaChangedDown Checked="True" Value="10" Action="Roll out" />
+        </AdjustmentConditions>
+        <ExitConditions>
+            <ProfitTarget Checked="True" Value="10" />
+            <MaxLoss Checked="True" Value="12" />
+            <DTE Checked="True" Value="5" />
+            <MaxAdjustments Checked="True" Value="3" />
+        </ExitConditions>
+    </StrategyWizard>
+</AlgoNETExplorer>

@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="iso-8859-1" ?>
+
+<AlgoNETExplorer>
+    <StrategyWizard StrategyName="30 Day Iron Condor" StrategyType="Condor">
+        <Description />
+        <NumberOfContracts>5</NumberOfContracts>
+        <EntryConditions>
+            <DTE DTE1="30" DTE2="35" />
+            <UnderlyingMovementSD Checked="False" SD1="-1" SD2="1" Days="5" />
+            <ShortDelta>10</ShortDelta>
+            <WingWidth>10</WingWidth>
+            <FlattenPositionDeltas Checked="True" />
+            <TradeAction Transaction="Sell" Type="Iron Condor" />
+        </EntryConditions>
+        <AdjustmentConditions>
+            <UnderlyingMoveUp Checked="False" Value="75" Action="Roll out" />
+            <UnderlyingMoveDown Checked="False" Value="75" Action="Roll out" />
+            <ShortStrikeDeltaChangedUp Checked="True" Value="10" Action="Roll out" />
+            <ShortStrikeDeltaChangedDown Checked="True" Value="10" Action="Roll out" />
+        </AdjustmentConditions>
+        <ExitConditions>
+            <ProfitTarget Checked="True" Value="10" />
+            <MaxLoss Checked="True" Value="10" />
+            <DTE Checked="True" Value="5" />
+            <MaxAdjustments Checked="True" Value="5" />
+        </ExitConditions>
+    </StrategyWizard>
+</AlgoNETExplorer>

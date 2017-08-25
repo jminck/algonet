@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="iso-8859-1" ?>
+
+<AlgoNETExplorer>
+    <StrategyWizard StrategyName="10 delta spread put no rules" StrategyType="Vertical">
+        <Description />
+        <NumberOfContracts>10</NumberOfContracts>
+        <EntryConditions>
+            <DTE DTE1="30" DTE2="35" />
+            <UnderlyingMovementSD Checked="False" SD1="-1" SD2="1" Days="5" />
+            <ShortDelta>10</ShortDelta>
+            <WingWidth>20</WingWidth>
+            <TradeAction Transaction="Sell" Type="Put Vertical" />
+        </EntryConditions>
+        <AdjustmentConditions>
+            <UnderlyingMoveUp Checked="False" Value="75" Action="Close Position" />
+            <UnderlyingMoveDown Checked="False" Value="75" Action="Close Position" />
+        </AdjustmentConditions>
+        <ExitConditions>
+            <ProfitTarget Checked="False" Value="15" />
+            <MaxLoss Checked="True" Value="15" />
+            <DTE Checked="False" Value="5" />
+            <MaxAdjustments Checked="False" Value="5" />
+        </ExitConditions>
+    </StrategyWizard>
+</AlgoNETExplorer>

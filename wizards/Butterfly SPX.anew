@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="iso-8859-1" ?>
+
+<AlgoNETExplorer>
+    <StrategyWizard StrategyName="Butterfly SPX" StrategyType="Butterfly">
+        <Description />
+        <NumberOfContracts>10</NumberOfContracts>
+        <EntryConditions>
+            <DTE DTE1="37" DTE2="45" />
+            <UnderlyingMovementSD Checked="True" SD1="-2" SD2="2" Days="5" />
+            <FlattenDeltas Checked="True" />
+            <WingWidth>50</WingWidth>
+            <TradeAction Transaction="Buy" Type="Put Butterfly" />
+        </EntryConditions>
+        <AdjustmentConditions>
+            <UnderlyingMoveUp Checked="True" Value="100" Action="Roll to ATM" />
+            <UnderlyingMoveDown Checked="True" Value="100" Action="Roll to ATM" />
+        </AdjustmentConditions>
+        <ExitConditions>
+            <ProfitTarget Checked="True" Value="15" />
+            <MaxLoss Checked="True" Value="15" />
+            <DTE Checked="True" Value="5" />
+            <MaxAdjustments Checked="True" Value="5" />
+        </ExitConditions>
+    </StrategyWizard>
+</AlgoNETExplorer>

@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="iso-8859-1" ?>
+
+<AlgoNETExplorer>
+    <StrategyWizard StrategyName="30 Day Butterfly roll ATM" StrategyType="Butterfly">
+        <Description />
+        <NumberOfContracts>20</NumberOfContracts>
+        <EntryConditions>
+            <DTE DTE1="25" DTE2="35" />
+            <UnderlyingMovementSD Checked="False" SD1="-1" SD2="1" Days="3" />
+            <FlattenDeltas Checked="True" />
+            <WingWidth>50</WingWidth>
+            <TradeAction Transaction="Buy" Type="Put Butterfly" />
+        </EntryConditions>
+        <AdjustmentConditions>
+            <UnderlyingMoveUp Checked="True" Value="80" Action="Roll to ATM" />
+            <UnderlyingMoveDown Checked="True" Value="80" Action="Roll to ATM" />
+        </AdjustmentConditions>
+        <ExitConditions>
+            <ProfitTarget Checked="True" Value="15" />
+            <MaxLoss Checked="True" Value="20" />
+            <DTE Checked="True" Value="5" />
+            <MaxAdjustments Checked="True" Value="5" />
+        </ExitConditions>
+    </StrategyWizard>
+</AlgoNETExplorer>

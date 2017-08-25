@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="iso-8859-1" ?>
+
+<AlgoNETExplorer>
+    <StrategyWizard StrategyName="AMZN 15 day Iron Condor" StrategyType="Condor">
+        <Description />
+        <NumberOfContracts>10</NumberOfContracts>
+        <EntryConditions>
+            <DTE DTE1="14" DTE2="18" />
+            <UnderlyingMovementSD Checked="True" SD1="-1" SD2="1" Days="3" />
+            <ShortDelta>22</ShortDelta>
+            <WingWidth>10</WingWidth>
+            <FlattenPositionDeltas Checked="True" />
+            <TradeAction Transaction="Sell" Type="Iron Condor" />
+        </EntryConditions>
+        <AdjustmentConditions>
+            <UnderlyingMoveUp Checked="False" Value="80" Action="Roll out" />
+            <UnderlyingMoveDown Checked="False" Value="80" Action="Roll out" />
+            <ShortStrikeDeltaChangedUp Checked="True" Value="10" Action="Roll out" />
+            <ShortStrikeDeltaChangedDown Checked="True" Value="10" Action="Roll out" />
+        </AdjustmentConditions>
+        <ExitConditions>
+            <ProfitTarget Checked="True" Value="12" />
+            <MaxLoss Checked="True" Value="15" />
+            <DTE Checked="True" Value="5" />
+            <MaxAdjustments Checked="True" Value="5" />
+        </ExitConditions>
+    </StrategyWizard>
+</AlgoNETExplorer>

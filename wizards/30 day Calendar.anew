@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="iso-8859-1" ?>
+
+<AlgoNETExplorer>
+    <StrategyWizard StrategyName="30 day Calendar" StrategyType="Calendar">
+        <Description />
+        <NumberOfContracts>10</NumberOfContracts>
+        <EntryConditions>
+            <DTE DTE1="30" DTE2="37" />
+            <UnderlyingMovementSD Checked="True" SD1="-1" SD2="1" Days="4" />
+            <VolatilitySkew Checked="True" Skew1="-1" Skew2="3" />
+            <TradeAction Transaction="Buy" Type="Lowest Cost Calendar" />
+        </EntryConditions>
+        <AdjustmentConditions>
+            <UnderlyingMoveUp Checked="True" Value="90" Action="Roll to ATM" />
+            <UnderlyingMoveDown Checked="True" Value="90" Action="Roll to ATM" />
+            <IVSkewChange Checked="True" Negative="-2" Positive="1" Action="Close Calendar" />
+        </AdjustmentConditions>
+        <ExitConditions>
+            <ProfitTarget Checked="True" Value="15" />
+            <MaxLoss Checked="True" Value="15" />
+            <DTE Checked="True" Value="5" />
+            <MaxAdjustments Checked="True" Value="5" />
+        </ExitConditions>
+    </StrategyWizard>
+</AlgoNETExplorer>
