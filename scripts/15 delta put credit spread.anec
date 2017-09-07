@@ -32,7 +32,8 @@ int PARAM_ProfitTarget=12;
 int PARAM_MaxLoss=15;
 int PARAM_ExitDTE=5;
 
-
+try {
+	
 //approximate 50% increase in size each year
 int yearcount = Backtest.TradingDateTime.Year - 2010;
 if (Backtest.TradingDateTime.Year &gt; 2011) {
@@ -102,6 +103,10 @@ if(Position.IsOpen==true) {
     //Check Max Adjustments
     if(Position.Adjustments &gt;= 5) Position.Close(&quot;Hit Max Adjustments&quot;);
 
+}
+
+} catch (Exception ex) {
+ WriteLog(&quot;Try/Catch hit&quot;);
 }</TickEventCode>
     </StrategyCode>
 </AlgoNETExplorer>
