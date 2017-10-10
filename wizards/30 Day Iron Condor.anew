@@ -5,8 +5,8 @@
         <Description />
         <NumberOfContracts>5</NumberOfContracts>
         <EntryConditions>
-            <DTE DTE1="30" DTE2="35" />
-            <UnderlyingMovementSD Checked="False" SD1="-1" SD2="1" Days="5" />
+            <DTE DTE1="40" DTE2="46" />
+            <UnderlyingMovementSD Checked="True" SD1="-1" SD2="1" Days="0" />
             <ShortDelta>10</ShortDelta>
             <WingWidth>10</WingWidth>
             <FlattenPositionDeltas Checked="True" />
@@ -19,8 +19,8 @@
             <ShortStrikeDeltaChangedDown Checked="True" Value="10" Action="Roll out" />
         </AdjustmentConditions>
         <ExitConditions>
-            <ProfitTarget Checked="True" Value="10" />
-            <MaxLoss Checked="True" Value="10" />
+            <ProfitTarget Checked="True" Value="8" />
+            <MaxLoss Checked="True" Value="12" />
             <DTE Checked="True" Value="5" />
             <MaxAdjustments Checked="True" Value="5" />
         </ExitConditions>

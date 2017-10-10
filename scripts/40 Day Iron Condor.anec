@@ -1,0 +1,151 @@
+﻿<?xml version="1.0" encoding="iso-8859-1" ?>
+
+<AlgoNETExplorer>
+    <StrategyCode StrategyName="40 Day Iron Condor" Language="C# .NET">
+        <TickEventCode>//
+// Copyright THJ Systems Ltd
+//
+//------- D E S C R I P T I O N -------
+//
+
+try {
+
+//------- P E R F O R M A N C E   P A R A M E T E R S -------
+Backtest.Configuration.UseWeekly=false;
+Backtest.Configuration.UseQuarterly=false;
+Backtest.Configuration.MaxExpirationDTE=46;
+
+//------- O P T I M I Z A T I O N   P A R A M E T E R S -------
+int PARAM_NearMonth=40;
+int PARAM_FarMonth=46;
+double PARAM_UnderlyingMovementSDdown=-1;
+double PARAM_UnderlyingMovementSDup=1;
+int PARAM_UnderlyingMovementSDDays=3;
+int PARAM_DeltaTarget=10;
+int PARAM_DeltaAdjustTriggerOffset=10;
+int PARAM_WingWidth=10;
+int PARAM_NumberOfContracts=20;
+int PARAM_ProfitTarget=8;
+int PARAM_MaxLoss=12;
+int PARAM_ExitDTE=5;
+
+//------- E N T R Y   R U L E S -------
+if(Position.IsOpen==false) {
+
+    //Check if underlying movement within entry SD limits
+    double maxSDup=0.0;
+    double maxSDdown=0.0;
+    GetMaxSDMovement(PARAM_UnderlyingMovementSDDays, ref maxSDup, ref maxSDdown);
+    if (maxSDup &gt; PARAM_UnderlyingMovementSDup) return;         // Max SD on upside exceeded
+    if (maxSDdown &lt; PARAM_UnderlyingMovementSDdown) return;     // Max SD on downside exceeded
+
+    //Find the month expiration cycle
+    var monthExpiration=GetExpiryByDTE(PARAM_NearMonth, PARAM_FarMonth);
+    if (monthExpiration == null) return;   // Haven&apos;t found an expiration matching our criteria
+
+    //Create a new Model Position and build Condor using the expiration cycles we found above.
+    var modelPosition=NewModelPosition();
+    if(modelPosition.AddCondor(PARAM_DeltaTarget, PARAM_WingWidth, Sell, CondorType.Iron, PARAM_NumberOfContracts, monthExpiration)==false) return;
+    modelPosition.Tag=&quot;Sell&quot;;
+
+    //Flatten Deltas by buying a single call option with the closest delta.
+    var leg=CreateModelLeg(Buy, 1, GetOptionByDelta(Call, -modelPosition.Delta, monthExpiration),&quot;FlattenDeltaLeg-&quot; + Position.Adjustments);
+    modelPosition.AddLeg(leg);
+
+    //Commit the Model Position to the Trade Log and add a comment
+    modelPosition.CommitTrade(modelPosition.Tag + &quot; Condor&quot;);
+}
+
+//------- A D J U S T M E N T   R U L E S -------
+if(Position.IsOpen==true) {
+
+    //Check if Short Strike Delta&apos;s within tollerance
+    var origShortLeg=Position.GetLegByName(&quot;LowerWingShortLeg*&quot;);
+    if (origShortLeg!=null) {
+        double delta=Math.Abs(origShortLeg.Delta);
+        double deltaTarget=-PARAM_DeltaTarget;
+
+        if (delta &gt; PARAM_DeltaTarget + PARAM_DeltaAdjustTriggerOffset) {
+
+            //Create a new Model Position
+            var modelPosition=NewModelPosition(); 
+
+            //Close the Lower Wing Vertical
+            var leg1=origShortLeg.CreateClosingModelLeg();
+            modelPosition.AddLeg(leg1);
+            var leg2=Position.GetLegByName(&quot;LowerWingLongLeg*&quot;).CreateClosingModelLeg();
+            modelPosition.AddLeg(leg2);
+
+            int wingoffset=0;
+            if (Position.Tag==&quot;Sell&quot;)
+                wingoffset = -PARAM_WingWidth;
+            else if (Position.Tag==&quot;Buy&quot;)
+                wingoffset = PARAM_WingWidth;
+
+            //Open new vertical with short leg at DeltaTarget
+            var shortLeg=CreateModelLeg(Sell, PARAM_NumberOfContracts, GetOptionByDelta(origShortLeg.Type, deltaTarget, GetExpiryByDTE(origShortLeg.DTE), wingoffset), &quot;LowerWingShortLeg-&quot; + (Position.Adjustments + 1));		// Get strike with dependent strike at wing width offset
+            modelPosition.AddLeg(shortLeg);
+            var longLeg=CreateModelLeg(Buy, PARAM_NumberOfContracts, GetOptionByStrike(origShortLeg.Type, shortLeg.Strike + wingoffset, GetExpiryByDTE(origShortLeg.DTE)), &quot;LowerWingLongLeg-&quot; + (Position.Adjustments + 1));
+            modelPosition.AddLeg(longLeg);
+
+            //Commit the Model Position to the Trade Log and add a comment
+            modelPosition.CommitTrade(&quot;Roll Lower Wing&quot;);
+        }
+    }
+    //Check if Short Strike Delta&apos;s within tollerance
+    origShortLeg=Position.GetLegByName(&quot;UpperWingShortLeg*&quot;);
+    if (origShortLeg!=null) {
+        double delta=Math.Abs(origShortLeg.Delta);
+        double deltaTarget=PARAM_DeltaTarget;
+
+        if (delta&gt;PARAM_DeltaTarget + PARAM_DeltaAdjustTriggerOffset) {
+
+            //Create a new Model Position
+            var modelPosition=NewModelPosition();
+
+            //Close the Upper Wing Vertical
+            var leg1=origShortLeg.CreateClosingModelLeg();
+            modelPosition.AddLeg(leg1);
+            var leg2=Position.GetLegByName(&quot;UpperWingLongLeg*&quot;).CreateClosingModelLeg();
+            modelPosition.AddLeg(leg2);
+
+            int wingoffset=0;
+            if (Position.Tag==&quot;Sell&quot;)
+                wingoffset = PARAM_WingWidth;
+            else if (Position.Tag==&quot;Buy&quot;)
+                wingoffset = -PARAM_WingWidth;
+
+            //Open new vertical with short leg at DeltaTarget
+            var shortLeg=CreateModelLeg(Sell, PARAM_NumberOfContracts, GetOptionByDelta(origShortLeg.Type, deltaTarget, GetExpiryByDTE(origShortLeg.DTE), wingoffset), &quot;UpperWingShortLeg-&quot; + (Position.Adjustments + 1));		// Get strike with dependent strike at wing width offset
+            modelPosition.AddLeg(shortLeg);
+            var longLeg=CreateModelLeg(Buy, PARAM_NumberOfContracts, GetOptionByStrike(origShortLeg.Type, shortLeg.Strike + wingoffset, GetExpiryByDTE(origShortLeg.DTE)), &quot;UpperWingLongLeg-&quot; + (Position.Adjustments + 1));
+            modelPosition.AddLeg(longLeg);
+
+            //Commit the Model Position to the Trade Log and add a comment
+            modelPosition.CommitTrade(&quot;Roll Upper Wing&quot;);
+        }
+    }
+}
+
+//------- E X I T   R U L E S -------
+if(Position.IsOpen==true) {
+
+    //Check Profit Target
+    if(Position.PnLPercentage &gt;= PARAM_ProfitTarget) Position.Close(&quot;Hit Profit Target&quot;);
+
+    //Check Max Loss
+    if(Position.PnLPercentage &lt;= -PARAM_MaxLoss) Position.Close(&quot;Hit Max Loss&quot;);
+
+    //Check Minimum DTE
+    if(Position.DTE &lt;= PARAM_ExitDTE) Position.Close(&quot;Hit Minimum DTE&quot;);
+
+    //Check Max Adjustments
+    if(Position.Adjustments &gt;= 5) Position.Close(&quot;Hit Max Adjustments&quot;);
+
+}
+
+} catch (Exception ex) {
+ WriteLog(&quot;Try/Catch hit&quot;);
+}</TickEventCode>
+    </StrategyCode>
+</AlgoNETExplorer>
