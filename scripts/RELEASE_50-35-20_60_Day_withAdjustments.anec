@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="iso-8859-1" ?>
 
 <AlgoNETExplorer>
-    <StrategyCode StrategyName="50-35-20_60_Day_withAdjustments" Language="C# .NET">
+    <StrategyCode StrategyName="RELEASE_50-35-20_60_Day_withAdjustments" Language="C# .NET">
         <TickEventCode>//
 // Copyright THJ Systems Ltd
 //
