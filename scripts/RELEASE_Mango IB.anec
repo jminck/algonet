@@ -14,7 +14,7 @@ Backtest.Configuration.UseQuarterly = true;
 Backtest.Configuration.MaxExpirationDTE = 50;
 Backtest.Configuration.CommissionRates.OptionPerContract = 1.0;
 
-if (Backtest.UnderlyingSymbol == &quot;SPX&quot;) {
+if(Backtest.UnderlyingSymbol == &quot;SPX&quot;) {
     Backtest.Configuration.PriceValidation.PositionConfirmationCount = 3;
     Backtest.Configuration.PriceValidation.PositionPercChange = 5;
 }
@@ -64,321 +64,321 @@ int PARAM_InitiationDayMinimum = 1;
 int PARAM_InitiationDayMaximum = 31;
 
 //Start and end window for taking trades
-TimeSpan currentTime = Backtest.TradingDateTime.ToLocalTime ().TimeOfDay; //Convert from UTC to localtime
-TimeSpan startTime = new TimeSpan (8, 45, 0); //9:00 AM
-TimeSpan endTime = new TimeSpan (14, 55, 0); //3:00 PM
+TimeSpan currentTime = Backtest.TradingDateTime.ToLocalTime().TimeOfDay; //Convert from UTC to localtime
+TimeSpan startTime = new TimeSpan(8, 45, 0); //9:00 AM
+TimeSpan endTime = new TimeSpan(14, 55, 0); //3:00 PM
 
 //scalable margin - add 50% of PnL to size up
 //but remove entire negative PnL if PnL is below 0
-if (PARAM_ScaleMargin == true) {
-    if (Backtest.Tag != null) {
-        double addMargin = (double) Backtest.Tag;
-        if (addMargin &gt; 0) {
-            PARAM_InitialMargin = PARAM_InitialMargin + (addMargin / 2);
+if(PARAM_ScaleMargin == true) {
+    if(Backtest.Tag != null) {
+        double addMargin =(double) Backtest.Tag;
+        if(addMargin &gt; 0) {
+            PARAM_InitialMargin = PARAM_InitialMargin +(addMargin / 2);
         } else {
-            PARAM_InitialMargin = PARAM_InitialMargin + (addMargin);
+            PARAM_InitialMargin = PARAM_InitialMargin +(addMargin);
         }
     }
-    if (Backtest.TradingDateTime.ToLocalTime ().TimeOfDay == startTime) WriteLog (&quot;PARAM_InitialxMargin=&quot; + PARAM_InitialMargin);
+    if(Backtest.TradingDateTime.ToLocalTime().TimeOfDay == startTime) WriteLog(&quot;PARAM_InitialxMargin=&quot; + PARAM_InitialMargin);
 }
 
 //work around backtest data problem for a specific date
-TimeSpan startTime12202012 = new TimeSpan (12, 0, 0);
-TimeSpan startTime10AM = new TimeSpan (10, 0, 0);
+TimeSpan startTime12202012 = new TimeSpan(12, 0, 0);
+TimeSpan startTime10AM = new TimeSpan(10, 0, 0);
 
 //minimum and maximum date of the month to enter a trade on
 //year and month don&apos;t matter for us, because we will only use the .Day property
-DateTime PARAM_InitiationDayMin = new DateTime (2000, 1, PARAM_InitiationDayMinimum);
-DateTime PARAM_InitiationDayMax = new DateTime (2999, 12, PARAM_InitiationDayMaximum);
+DateTime PARAM_InitiationDayMin = new DateTime(2000, 1, PARAM_InitiationDayMinimum);
+DateTime PARAM_InitiationDayMax = new DateTime(2999, 12, PARAM_InitiationDayMaximum);
 
 //log params at the beginning of the run
-if (Backtest.TradingDateTime.ToLocalTime ().TimeOfDay == startTime) {
-    if (Backtest.TradeCount == 1) {
-        WriteLog (&quot;-- BEGIN PARAMETERS ------------------------------------------&quot;);
-        WriteLog (&quot;PARAM_NearMonth:&quot; + PARAM_NearMonth);
-        WriteLog (&quot;PARAM_FarMonth: &quot; + PARAM_FarMonth);
-        WriteLog (&quot;PARAM_ProfitTarget: &quot; + PARAM_ProfitTarget);
-        WriteLog (&quot;PARAM_MaxLoss: &quot; + PARAM_MaxLoss);
-        WriteLog (&quot;PARAM_MaxUnderlyingIV: &quot; + PARAM_MaxUnderlyingIV);
-        WriteLog (&quot;PARAM_UnderlyingMovementSDdown: &quot; + PARAM_UnderlyingMovementSDdown);
-        WriteLog (&quot;PARAM_UnderlyingMovementSDup: &quot; + PARAM_UnderlyingMovementSDup);
-        WriteLog (&quot;PARAM_UnderlyingMovementSDDays: &quot; + PARAM_UnderlyingMovementSDDays);
-        WriteLog (&quot;PARAM_UnderlyingMovementSDDays: &quot; + PARAM_UnderlyingMovementSDDays);
-        WriteLog (&quot;startTime: &quot; + startTime + &quot; endTime: &quot; + endTime);
-        WriteLog (&quot;-- END PARAMETERS ------------------------------------------&quot;);
+if(Backtest.TradingDateTime.ToLocalTime().TimeOfDay == startTime) {
+    if(Backtest.TradeCount == 1) {
+        WriteLog(&quot;-- BEGIN PARAMETERS ------------------------------------------&quot;);
+        WriteLog(&quot;PARAM_NearMonth:&quot; + PARAM_NearMonth);
+        WriteLog(&quot;PARAM_FarMonth: &quot; + PARAM_FarMonth);
+        WriteLog(&quot;PARAM_ProfitTarget: &quot; + PARAM_ProfitTarget);
+        WriteLog(&quot;PARAM_MaxLoss: &quot; + PARAM_MaxLoss);
+        WriteLog(&quot;PARAM_MaxUnderlyingIV: &quot; + PARAM_MaxUnderlyingIV);
+        WriteLog(&quot;PARAM_UnderlyingMovementSDdown: &quot; + PARAM_UnderlyingMovementSDdown);
+        WriteLog(&quot;PARAM_UnderlyingMovementSDup: &quot; + PARAM_UnderlyingMovementSDup);
+        WriteLog(&quot;PARAM_UnderlyingMovementSDDays: &quot; + PARAM_UnderlyingMovementSDDays);
+        WriteLog(&quot;PARAM_UnderlyingMovementSDDays: &quot; + PARAM_UnderlyingMovementSDDays);
+        WriteLog(&quot;startTime: &quot; + startTime + &quot; endTime: &quot; + endTime);
+        WriteLog(&quot;-- END PARAMETERS ------------------------------------------&quot;);
     }
 }
 try {
 
     //there&apos;s something wrong with the backtest data on 01/04/2016
-    if (Backtest.TradingDateTime.Date.ToString() == &quot;1/4/2016 12:00:00 AM&quot;) {
-        if (currentTime &lt; startTime10AM) {
+    if(Backtest.TradingDateTime.Date.ToString() == &quot;1/4/2016 12:00:00 AM&quot;) {
+        if(currentTime &lt; startTime10AM) {
             return;
         }
     }
 
     //------- E N T R Y   R U L E S -------
-    if (Position.IsOpen == false) {
+    if(Position.IsOpen == false) {
 
         //reinitilize tag
         Position.Tag = null;
 
         // even though it is cheating, don&apos;t initiate any trades on 8/21/15 and 8/24/15
         // because pricing data on 8/24 is a mess and it really throw off the backtest
-
-        if (Backtest.TradingDateTime.Date.ToString() == &quot;8/24/2015 12:00:00 AM&quot;) {
-            WriteLog (&quot;Backtest.TradingDateTime.Date: &quot; + Backtest.TradingDateTime.Date.Date);
+        if(Backtest.TradingDateTime.Date.ToString() == &quot;8/24/2015 12:00:00 AM&quot;) {
+            WriteLog(&quot;Backtest.TradingDateTime.Date: &quot; + Backtest.TradingDateTime.Date.Date);
             return;
         }
-        if (Backtest.TradingDateTime.Date.ToString() == &quot;8/21/2015 12:00:00 AM&quot;) {
-            WriteLog (&quot;Backtest.TradingDateTime.Date: &quot; + Backtest.TradingDateTime.Date.Date);
+        if(Backtest.TradingDateTime.Date.ToString() == &quot;8/21/2015 12:00:00 AM&quot;) {
+            WriteLog(&quot;Backtest.TradingDateTime.Date: &quot; + Backtest.TradingDateTime.Date.Date);
             return;
         }
 
         //there&apos;s something wrong with the backtest data on 12/20/2012 until 11:00 AM
-        if (Backtest.TradingDateTime.Date.ToString() == &quot;12/20/2012 12:00:00 AM&quot;) {
-            if (currentTime &lt;= startTime12202012) {
+        if(Backtest.TradingDateTime.Date.ToString() == &quot;12/20/2012 12:00:00 AM&quot;) {
+            if(currentTime &lt;= startTime12202012) {
                 return;
             }
         }
 
         //there&apos;s something wrong with the backtest data on 8/1/2011 - 8/3/2011, don&apos;t initiate anything on those days
-        if (Backtest.TradingDateTime.Date.ToString() == &quot;8/1/2011 12:00:00 AM&quot;) {
+        if(Backtest.TradingDateTime.Date.ToString() == &quot;8/1/2011 12:00:00 AM&quot;) {
             return;
         }
-        if (Backtest.TradingDateTime.Date.ToString() == &quot;8/2/2011 12:00:00 AM&quot;) {
+        if(Backtest.TradingDateTime.Date.ToString() == &quot;8/2/2011 12:00:00 AM&quot;) {
             return;
         }
-        if (Backtest.TradingDateTime.Date.ToString() == &quot;8/3/2011 12:00:00 AM&quot;) {
+        if(Backtest.TradingDateTime.Date.ToString() == &quot;8/3/2011 12:00:00 AM&quot;) {
             return;
         }
 
         //if initiation week is set, then only initiate trades that week of the month
         //4th week includes days 28-31 as well
-        if ((Backtest.TradingDateTime.Day &gt;= PARAM_InitiationDayMin.Day) &amp;&amp; (Backtest.TradingDateTime.Day &lt;= PARAM_InitiationDayMax.Day)) {
-            if (Backtest.TradingDateTime.ToLocalTime ().TimeOfDay == startTime) WriteLog (&quot;Ok to take trades this week - Day=&quot; + Backtest.TradingDateTime.Day + &quot; Min=&quot; + PARAM_InitiationDayMin.Day + &quot; Max=&quot; + PARAM_InitiationDayMax.Day);
+        if((Backtest.TradingDateTime.Day &gt;= PARAM_InitiationDayMin.Day) &amp;&amp;(Backtest.TradingDateTime.Day &lt;= PARAM_InitiationDayMax.Day)) {
+            if(Backtest.TradingDateTime.ToLocalTime().TimeOfDay == startTime) WriteLog(&quot;Ok to take trades this week - Day=&quot; + Backtest.TradingDateTime.Day + &quot; Min=&quot; + PARAM_InitiationDayMin.Day + &quot; Max=&quot; + PARAM_InitiationDayMax.Day);
         } else {
-            if (Backtest.TradingDateTime.ToLocalTime ().TimeOfDay == startTime) WriteLog (&quot;NOT Ok to take trades this week - Day=&quot; + Backtest.TradingDateTime.Day + &quot; Min=&quot; + PARAM_InitiationDayMin.Day + &quot; Max=&quot; + PARAM_InitiationDayMax.Day);
+            if(Backtest.TradingDateTime.ToLocalTime().TimeOfDay == startTime) WriteLog(&quot;NOT Ok to take trades this week - Day=&quot; + Backtest.TradingDateTime.Day + &quot; Min=&quot; + PARAM_InitiationDayMin.Day + &quot; Max=&quot; + PARAM_InitiationDayMax.Day);
             return;
         }
 
         //Check if underlying movement within entry SD limits
         double maxSDup = 0.0;
         double maxSDdown = 0.0;
-        GetMaxSDMovement (PARAM_UnderlyingMovementSDDays, ref maxSDup, ref maxSDdown);
-        if (maxSDup &gt; PARAM_UnderlyingMovementSDup) {
+        GetMaxSDMovement(PARAM_UnderlyingMovementSDDays, ref maxSDup, ref maxSDdown);
+        if(maxSDup &gt; PARAM_UnderlyingMovementSDup) {
             //Check Time is 8:30 AM otherwise this logs every 5 min but SD value is static for the entire day
-            if (Backtest.TradingDateTime.ToLocalTime ().TimeOfDay == new TimeSpan (15, 00, 0)) { //Convert from UTC to localtime
-                WriteLog (&quot;SD Up exceeded: maxSDup = &quot; + maxSDup);
+            if(Backtest.TradingDateTime.ToLocalTime().TimeOfDay == new TimeSpan(15, 00, 0)) { //Convert from UTC to localtime
+                WriteLog(&quot;SD Up exceeded: maxSDup = &quot; + maxSDup);
                 return; // Max SD on upside exceeded
             }
         }
-        if (maxSDdown &lt; PARAM_UnderlyingMovementSDdown) {
+        if(maxSDdown &lt; PARAM_UnderlyingMovementSDdown) {
             //Check Time is 8:30 AM otherwise this logs every 5 min but SD value is static for the entire day
-            if (Backtest.TradingDateTime.ToLocalTime ().TimeOfDay == new TimeSpan (15, 00, 0)) { //Convert from UTC to localtime
-                WriteLog (&quot;SD Down exceeded: maxSDdown = &quot; + maxSDdown);
+            if(Backtest.TradingDateTime.ToLocalTime().TimeOfDay == new TimeSpan(15, 00, 0)) { //Convert from UTC to localtime
+                WriteLog(&quot;SD Down exceeded: maxSDdown = &quot; + maxSDdown);
                 return; // Max SD on downside exceeded
             }
         }
 
         //DO not initiate if the market is going haywire
-        if (Underlying.IV &lt;= PARAM_MaxUnderlyingIV) {
+        if(Underlying.IV &lt;= PARAM_MaxUnderlyingIV) {
 
-            if ((currentTime &gt;= startTime) &amp;&amp; (currentTime &lt;= endTime)) {
+            if((currentTime &gt;= startTime) &amp;&amp;(currentTime &lt;= endTime)) {
 
                 //Find the month expiration cycle
-                var monthExpiration = GetExpiryByDTE (PARAM_NearMonth, PARAM_FarMonth);
-                if (monthExpiration == null) return; // Haven&apos;t found an expiration matching our criteria
+                var monthExpiration = GetExpiryByDTE(PARAM_NearMonth, PARAM_FarMonth);
+                if(monthExpiration == null) return; // Haven&apos;t found an expiration matching our criteria
 
                 //Create a new Model Position and build an Iron Butterfly using the expiration cycles we found above.
-                var modelPosition = NewModelPosition ();
-                var legAsym1 = CreateModelLeg (SELL, 1, GetOptionByStrike (Put, (Underlying.Last) - PARAM_ATMOffset, monthExpiration, true), &quot;ShortPut-&quot; + Position.Adjustments);
-                modelPosition.AddLeg (legAsym1);
-                var legAsym2 = CreateModelLeg (BUY, 1, GetOptionByStrike (Put, (Underlying.Last - PARAM_PutSpreadWidth) - PARAM_ATMOffset, monthExpiration, true), &quot;LongPut-&quot; + Position.Adjustments);
-                modelPosition.AddLeg (legAsym2);
-                var legAsym3 = CreateModelLeg (SELL, 1, GetOptionByStrike (Call, (Underlying.Last) + PARAM_ATMOffset, monthExpiration, true), &quot;ShortCall-&quot; + Position.Adjustments);
-                modelPosition.AddLeg (legAsym3);
-                var legAsym4 = CreateModelLeg (BUY, 1, GetOptionByStrike (Call, (Underlying.Last + PARAM_CallSpreadWidth) + PARAM_ATMOffset, monthExpiration, true), &quot;LongCall-&quot; + Position.Adjustments);
-                modelPosition.AddLeg (legAsym4);
+                var modelPosition = NewModelPosition();
+                var legAsym1 = CreateModelLeg(SELL, 1, GetOptionByStrike(Put,(Underlying.Last) - PARAM_ATMOffset, monthExpiration, true), &quot;ShortPut-&quot; + Position.Adjustments);
+                modelPosition.AddLeg(legAsym1);
+                var legAsym2 = CreateModelLeg(BUY, 1, GetOptionByStrike(Put,(Underlying.Last - PARAM_PutSpreadWidth) - PARAM_ATMOffset, monthExpiration, true), &quot;LongPut-&quot; + Position.Adjustments);
+                modelPosition.AddLeg(legAsym2);
+                var legAsym3 = CreateModelLeg(SELL, 1, GetOptionByStrike(Call,(Underlying.Last) + PARAM_ATMOffset, monthExpiration, true), &quot;ShortCall-&quot; + Position.Adjustments);
+                modelPosition.AddLeg(legAsym3);
+                var legAsym4 = CreateModelLeg(BUY, 1, GetOptionByStrike(Call,(Underlying.Last + PARAM_CallSpreadWidth) + PARAM_ATMOffset, monthExpiration, true), &quot;LongCall-&quot; + Position.Adjustments);
+                modelPosition.AddLeg(legAsym4);
                 //need logic here to decive if 40 wide call spread is good or needs to be narrowed to 35
-                WriteLog (&quot;Model Position for 1 lot position deltas is: &quot; + modelPosition.Delta);
-                if (modelPosition.Delta &lt; -3) {
+                WriteLog(&quot;Model Position for 1 lot position deltas is: &quot; + modelPosition.Delta);
+                if(modelPosition.Delta &lt; -3) {
                     //reset the model 1 lot and use smaller call width
-                    modelPosition = NewModelPosition ();
+                    modelPosition = NewModelPosition();
                     PARAM_CallSpreadWidth = 35;
-                    legAsym1 = CreateModelLeg (SELL, 1, GetOptionByStrike (Put, (Underlying.Last) - PARAM_ATMOffset, monthExpiration, true), &quot;ShortPut-&quot; + Position.Adjustments);
-                    modelPosition.AddLeg (legAsym1);
-                    legAsym2 = CreateModelLeg (BUY, 1, GetOptionByStrike (Put, (Underlying.Last - PARAM_PutSpreadWidth) - PARAM_ATMOffset, monthExpiration, true), &quot;LongPut-&quot; + Position.Adjustments);
-                    modelPosition.AddLeg (legAsym2);
-                    legAsym3 = CreateModelLeg (SELL, 1, GetOptionByStrike (Call, (Underlying.Last) + PARAM_ATMOffset, monthExpiration, true), &quot;ShortCall-&quot; + Position.Adjustments);
-                    modelPosition.AddLeg (legAsym3);
-                    legAsym4 = CreateModelLeg (BUY, 1, GetOptionByStrike (Call, (Underlying.Last + PARAM_CallSpreadWidth) + PARAM_ATMOffset, monthExpiration, true), &quot;LongCall-&quot; + Position.Adjustments);
-                    modelPosition.AddLeg (legAsym4);
-                    WriteLog (&quot;Adjusted Model Position for 1 lot position deltas is: &quot; + modelPosition.Delta);
+                    legAsym1 = CreateModelLeg(SELL, 1, GetOptionByStrike(Put,(Underlying.Last) - PARAM_ATMOffset, monthExpiration, true), &quot;ShortPut-&quot; + Position.Adjustments);
+                    modelPosition.AddLeg(legAsym1);
+                    legAsym2 = CreateModelLeg(BUY, 1, GetOptionByStrike(Put,(Underlying.Last - PARAM_PutSpreadWidth) - PARAM_ATMOffset, monthExpiration, true), &quot;LongPut-&quot; + Position.Adjustments);
+                    modelPosition.AddLeg(legAsym2);
+                    legAsym3 = CreateModelLeg(SELL, 1, GetOptionByStrike(Call,(Underlying.Last) + PARAM_ATMOffset, monthExpiration, true), &quot;ShortCall-&quot; + Position.Adjustments);
+                    modelPosition.AddLeg(legAsym3);
+                    legAsym4 = CreateModelLeg(BUY, 1, GetOptionByStrike(Call,(Underlying.Last + PARAM_CallSpreadWidth) + PARAM_ATMOffset, monthExpiration, true), &quot;LongCall-&quot; + Position.Adjustments);
+                    modelPosition.AddLeg(legAsym4);
+                    WriteLog(&quot;Adjusted Model Position for 1 lot position deltas is: &quot; + modelPosition.Delta);
                 }
 
-                WriteLog (&quot;1 lot model Center price is: &quot; + (Underlying.Last) + PARAM_ATMOffset + &quot; offset is: &quot; + PARAM_ATMOffset + &quot; last: &quot; + Underlying.Last);
-                modelPosition.CommitTrade (&quot;Buy Mango 1 lot&quot;);
+                WriteLog(&quot;1 lot model Center price is: &quot; +(Underlying.Last) + PARAM_ATMOffset + &quot; offset is: &quot; + PARAM_ATMOffset + &quot; last: &quot; + Underlying.Last);
+                modelPosition.CommitTrade(&quot;Buy Mango 1 lot&quot;);
 
                 //determine margin of a 1 lot so we can figure out how many lots to put on
                 double nl = PARAM_InitialMargin / Position.Margin;
-                int numLots = (int) nl;
-                WriteLog (&quot;numLots: &quot; + numLots);
-                var modelPosition2 = NewModelPosition ();
-                legAsym1 = CreateModelLeg (SELL, numLots, GetOptionByStrike (Put, (Underlying.Last) - PARAM_ATMOffset, monthExpiration, true), &quot;ShortPut-&quot; + Position.Adjustments);
-                modelPosition2.AddLeg (legAsym1);
-                legAsym2 = CreateModelLeg (BUY, numLots, GetOptionByStrike (Put, (Underlying.Last - PARAM_PutSpreadWidth) - PARAM_ATMOffset, monthExpiration, true), &quot;LongPut-&quot; + Position.Adjustments);
-                modelPosition2.AddLeg (legAsym2);
-                legAsym3 = CreateModelLeg (SELL, numLots, GetOptionByStrike (Call, (Underlying.Last) + PARAM_ATMOffset, monthExpiration, true), &quot;ShortCall-&quot; + Position.Adjustments);
-                modelPosition2.AddLeg (legAsym3);
-                legAsym4 = CreateModelLeg (BUY, numLots, GetOptionByStrike (Call, (Underlying.Last + PARAM_CallSpreadWidth) + PARAM_ATMOffset, monthExpiration, true), &quot;LongCall-&quot; + Position.Adjustments);
-                modelPosition2.AddLeg (legAsym4);
+                int numLots =(int) nl;
+                WriteLog(&quot;numLots: &quot; + numLots);
+                var modelPosition2 = NewModelPosition();
+                legAsym1 = CreateModelLeg(SELL, numLots, GetOptionByStrike(Put,(Underlying.Last) - PARAM_ATMOffset, monthExpiration, true), &quot;ShortPut-&quot; + Position.Adjustments);
+                modelPosition2.AddLeg(legAsym1);
+                legAsym2 = CreateModelLeg(BUY, numLots, GetOptionByStrike(Put,(Underlying.Last - PARAM_PutSpreadWidth) - PARAM_ATMOffset, monthExpiration, true), &quot;LongPut-&quot; + Position.Adjustments);
+                modelPosition2.AddLeg(legAsym2);
+                legAsym3 = CreateModelLeg(SELL, numLots, GetOptionByStrike(Call,(Underlying.Last) + PARAM_ATMOffset, monthExpiration, true), &quot;ShortCall-&quot; + Position.Adjustments);
+                modelPosition2.AddLeg(legAsym3);
+                legAsym4 = CreateModelLeg(BUY, numLots, GetOptionByStrike(Call,(Underlying.Last + PARAM_CallSpreadWidth) + PARAM_ATMOffset, monthExpiration, true), &quot;LongCall-&quot; + Position.Adjustments);
+                modelPosition2.AddLeg(legAsym4);
 
                 //Commit the Model Position to the Trade Log and add a comment
-                WriteLog (numLots + &quot; lot model Center price is: &quot; + (Underlying.Last) + PARAM_ATMOffset + &quot; offset is: &quot; + PARAM_ATMOffset + &quot; last: &quot; + Underlying.Last);
-                modelPosition2.CommitTrade (&quot;Buy Mango Iron Butterfly number of lots: &quot; + numLots);
-                WriteLog (&quot;Trade Entry - IV: &quot; + Underlying.IV);
+                WriteLog(numLots + &quot; lot model Center price is: &quot; +(Underlying.Last) + PARAM_ATMOffset + &quot; offset is: &quot; + PARAM_ATMOffset + &quot; last: &quot; + Underlying.Last);
+                modelPosition2.CommitTrade(&quot;Buy Mango Iron Butterfly number of lots: &quot; + numLots);
+                WriteLog(&quot;Trade Entry - IV: &quot; + Underlying.IV);
             }
         } else {
-            WriteLog (&quot;Not initiating a trade because Underlying.IV = &quot; + Underlying.IV + &quot; and max is 25&quot;);
+            WriteLog(&quot;Not initiating a trade because Underlying.IV = &quot; + Underlying.IV + &quot; and max is 25&quot;);
         }
     }
-} catch (Exception ex) {
-    WriteLog (&quot;Try/Catch hit in initiation block&quot;);
+} catch(Exception ex) {
+    WriteLog(&quot;Try/Catch hit in initiation block&quot;);
 }
 
 //------- A D J U S T M E N T   R U L E S -------
 //
 //There are 4 types of adjusmtments to be made:
 // 1- buy a long put to cut deltas by 80% if we are down 1.7 SD
-// 2- roll shorts up or down when position deltas hit threshold (manual rule 8.5-10 on downside and 8.5-10 on upside, this is set in vars above)
-// 3- roll spread on side being pressed up or down when expiration breakeven is hit (rule is to roll the spread 30 points)
+// 2- roll shorts up or down when position deltas hit threshold(manual rule 8.5-10 on downside and 8.5-10 on upside, this is set in vars above)
+// 3- roll spread on side being pressed up or down when expiration breakeven is hit(rule is to roll the spread 30 points)
 //    not narrowins spreads when rolling entire spread because the rolling of shorts should handle that if we&apos;re still with too many position deltas
 //    after repositioning the spread
 // 4- if short leg deltas is less than 10, roll up to 10-15 and roil long up same distance
 
 try {
-    if (Position.IsOpen == true) {
+    if(Position.IsOpen == true) {
 
-        if ((currentTime &gt;= startTime) &amp;&amp; (currentTime &lt;= endTime)) {
+        if((currentTime &gt;= startTime) &amp;&amp;(currentTime &lt;= endTime)) {
 
             //Find the month expiration cycle
-            var currentExpiration = GetExpiryByDTE (Position.GetLegByName (&quot;ShortPut*&quot;).DTE);
+            var currentExpiration = GetExpiryByDTE(Position.GetLegByName(&quot;ShortPut*&quot;).DTE);
 
-            var midBE = (Position.Expiration ().LowerBE + Position.Expiration ().UpperBE) / 2;
-            var targetLowerBE = midBE - (midBE - Position.Expiration ().LowerBE);
-            var targetUpperBE = midBE + (Position.Expiration ().UpperBE - midBE);
+            var midBE =(Position.Expiration().LowerBE + Position.Expiration().UpperBE) / 2;
+            var targetLowerBE = midBE -(midBE - Position.Expiration().LowerBE);
+            var targetUpperBE = midBE +(Position.Expiration().UpperBE - midBE);
             var adjustment = false;
 
             // adjustment #1 - buy puts if we&apos;re down 1.7 SD today
             // buy long puts in the back month when we&apos;re down 1.7 standard deviation for the day
             // cut deltas by about 80%
-            if (Underlying.StdDev &lt; -1.7) {
-                WriteLog (&quot;Standard Deviation greater than -1.7 &quot; + Underlying.StdDev);
-                var modelPosition = NewModelPosition ();
+            if(Underlying.StdDev &lt; -1.7) {
+                WriteLog(&quot;Standard Deviation greater than -1.7 &quot; + Underlying.StdDev);
+                var modelPosition = NewModelPosition();
                 int hedgeDelta = 0;
                 int hedgeCount = 0;
-                if (Position.Delta &gt; 50) {
-                    hedgeCount = (int) Position.Delta / 50;
-                    hedgeDelta = (int) Position.Delta / hedgeCount;
+				WriteLog(&quot;StDev &gt; 1.7, Position.Delta=&quot; + Position.Delta);
+                if(Position.Delta &gt; 50) {
+                    hedgeCount =(int) Position.Delta / 50;
+                    hedgeDelta =(int) Position.Delta / hedgeCount;
                 } else {
                     // don&apos;t do anything until we have at least 50 deltas to cut
                     hedgeCount = 0;
                 }
-                WriteLog (&quot;hedgeCount: &quot; + hedgeCount);
-                if (hedgeCount &gt; 0) {
+                if(hedgeCount &gt; 0) {
+					WriteLog(&quot;number of hedges to buy (hedgeCount)=&quot; + hedgeCount + &quot; Position.Delta=&quot; + Position.Delta);
                     //Find the month expiration cycle
-                    var backMonthExpiration = GetExpiryByDTE (PARAM_NearMonth, PARAM_FarMonth);
-                    if (backMonthExpiration == null) {
-                        WriteLog (&quot;no back month expirtion found when trying to buy hedge, returning!&quot;);
+                    var backMonthExpiration = GetExpiryByDTE(PARAM_NearMonth, PARAM_FarMonth);
+                    if(backMonthExpiration == null) {
+                        WriteLog(&quot;no back month expirtion found when trying to buy hedge, returning!&quot;);
                         return; // Haven&apos;t found an expiration matching our criteria
                     }
 
-                    var legHedge = CreateModelLeg (BUY, hedgeCount, GetOptionByDelta (Put, -hedgeDelta, currentExpiration), &quot;Insurance-&quot; + Position.Adjustments);
-                    //legHedge.Tag=&quot;tag: &quot; + (double) Underlying.High;
-                    legHedge.Tag = &quot;ins-&quot;;
-                    modelPosition.AddLeg (legHedge);
-                    modelPosition.CommitTrade (&quot;Buy insurance&quot;);
+                    var legHedge = CreateModelLeg(BUY, hedgeCount, GetOptionByDelta(Put, -hedgeDelta, currentExpiration), &quot;Insurance-&quot; + Position.Adjustments);
+                    legHedge.Tag=Underlying.High.ToString();
+                    modelPosition.AddLeg(legHedge);
+                    modelPosition.CommitTrade(&quot;Buy insurance&quot;);
                     adjustment = true;
-                    //tag position with HOD when we buy unsurance
-                    Position.Tag = Underlying.High;
                 }
             }
 
-            //Get rid of insurance if we are above HOD of day we bought insurnance
-            if (Position.Tag != null) {
-                WriteLog (&quot;Last: &quot; + Underlying.Last + &quot; Tag: &quot; + Position.Tag);
-                double HOD = Convert.ToDouble (Position.Tag);
-                WriteLog (&quot;past HOD = Position.Tag&quot;);
-                if (Underlying.Last &gt;= HOD) {
-                    WriteLog (&quot;Inside if last&gt;tag loop&quot;);
-                    //Create a new Model Position
-                    var modelPosition = NewModelPosition ();
-                    var hedge = Position.GetLegByName (&quot;Insurance*&quot;);
-                    if (hedge != null) {
-                        WriteLog (&quot;Inside if hedge!=1null loop&quot;);
-                        var leg = hedge.CreateClosingModelLeg ();
-                        modelPosition.AddLeg (leg);
-                        modelPosition.CommitTrade (&quot;Close Insurance&quot;);
-                        adjustment = true;
-                        Position.Tag = null;
-                        WriteLog (&quot;At end of if hedge!=1null loop&quot;);
-                    }
-                }
-            }
+            //Get rid of insurance if we are above HOD of day we bought insurance
+			//NOTE - if we&apos;ve bought insurance on multiple days we don&apos;t have a way to track the HOD per instance we bought insurance
+			//Position.Tag will only contain the last(lowest) HOD
+            foreach(Position.IPositionLeg leg in Position.GetAllLegs()) {
+				 if(leg.LegName.StartsWith(&quot;Insurance&quot;)) {
+						WriteLog(&quot;evaluating &quot; + leg.LegName);
+					}
+  				if(leg.Tag != null) {
+					WriteLog(leg.LegName + &quot; has tag &quot; + leg.Tag);
+					double hedgeRemovalPrice = Convert.ToDouble(leg.Tag);
+					if(hedgeRemovalPrice &lt;= Underlying.Last) {
+						WriteLog(&quot;hedgeRemovalPrice &lt;= Underlying.Last&quot;);
+						WriteLog(&quot;Underlying.Last=&quot; + Underlying.Last + &quot;hedgeRemovalPrice=&quot; + hedgeRemovalPrice);
+	                    //Create a new Model Position
+	                    var modelPosition = NewModelPosition();
+	                    var closingLeg = leg.CreateClosingModelLeg();
+	                    modelPosition.AddLeg(closingLeg);
+	                    modelPosition.CommitTrade(&quot;Close Insurance srtike:&quot; + leg.Strike + &quot; lower than last:&quot; + Underlying.Last);
+	                    adjustment = true;
+	                    Position.Tag = null;
+					}
+				}
+
+			}
 
             //adjustment #2 - reposition spread when we hit expiration breakeven on that side
             // roll put fly down if we hit lower breakeven
-            if (Underlying.Last &lt;= targetLowerBE) {
+            if(Underlying.Last &lt;= targetLowerBE) {
 
                 // we already did an adjustment
-                if (adjustment == true) return;
+                if(adjustment == true) return;
 
                 //Create a new Model Position
-                var modelPosition = NewModelPosition ();
+                var modelPosition = NewModelPosition();
 
                 //Close the Lower Wing Vertical
-                var oldLongLeg = Position.GetLegByName (&quot;LongPut*&quot;).CreateClosingModelLeg ();
-                modelPosition.AddLeg (oldLongLeg);
-                var oldShortLeg = Position.GetLegByName (&quot;ShortPut*&quot;).CreateClosingModelLeg ();
-                modelPosition.AddLeg (oldShortLeg);
+                var oldLongLeg = Position.GetLegByName(&quot;LongPut*&quot;).CreateClosingModelLeg();
+                modelPosition.AddLeg(oldLongLeg);
+                var oldShortLeg = Position.GetLegByName(&quot;ShortPut*&quot;).CreateClosingModelLeg();
+                modelPosition.AddLeg(oldShortLeg);
 
                 //Open new vertical with short leg at DeltaTarget
-                var newShortLeg = CreateModelLeg (Sell, oldShortLeg.Qty, GetOptionByStrike (Put, oldShortLeg.Strike - PARAM_RollDistance, currentExpiration), &quot;ShortPut-&quot; + Position.Adjustments);
-                modelPosition.AddLeg (newShortLeg);
+                var newShortLeg = CreateModelLeg(Sell, oldShortLeg.Qty, GetOptionByStrike(Put, oldShortLeg.Strike - PARAM_RollDistance, currentExpiration), &quot;ShortPut-&quot; + Position.Adjustments);
+                modelPosition.AddLeg(newShortLeg);
 
-                var newLongLeg = CreateModelLeg (Buy, oldLongLeg.Qty, GetOptionByStrike (Put, oldLongLeg.Strike - (PARAM_RollDistance + 5), currentExpiration), &quot;LongPut-&quot; + Position.Adjustments);
-                modelPosition.AddLeg (newLongLeg);
+                var newLongLeg = CreateModelLeg(Buy, oldLongLeg.Qty, GetOptionByStrike(Put, oldLongLeg.Strike -(PARAM_RollDistance + 5), currentExpiration), &quot;LongPut-&quot; + Position.Adjustments);
+                modelPosition.AddLeg(newLongLeg);
 
                 //Commit the Model Position to the Trade Log and add a comment
-                modelPosition.CommitTrade (&quot;Roll Lower Wing&quot;);
+                modelPosition.CommitTrade(&quot;Roll Lower Wing&quot;);
                 adjustment = true;
 
             }
 
             // roll put fly up if we hit upper breakeven
-            if (Underlying.Last &gt;= targetUpperBE) {
+            if(Underlying.Last &gt;= targetUpperBE) {
 
-                // we already did an adjustment
-                if (adjustment == true) return;
+                // we already did an adjustment so we&apos;re done
+                if(adjustment == true) return;
 
                 //Create a new Model Position
-                var modelPosition = NewModelPosition ();
+                var modelPosition = NewModelPosition();
 
                 //Close the Upper Wing Vertical
-                var oldLongLeg = Position.GetLegByName (&quot;LongCall*&quot;).CreateClosingModelLeg ();
-                modelPosition.AddLeg (oldLongLeg);
-                var oldShortLeg = Position.GetLegByName (&quot;ShortCall*&quot;).CreateClosingModelLeg ();
-                modelPosition.AddLeg (oldShortLeg);
+                var oldLongLeg = Position.GetLegByName(&quot;LongCall*&quot;).CreateClosingModelLeg();
+                modelPosition.AddLeg(oldLongLeg);
+                var oldShortLeg = Position.GetLegByName(&quot;ShortCall*&quot;).CreateClosingModelLeg();
+                modelPosition.AddLeg(oldShortLeg);
 
                 //Open new vertical with short leg at DeltaTarget
-                var newShortLeg = CreateModelLeg (Sell, oldShortLeg.Qty, GetOptionByStrike (Call, oldShortLeg.Strike + PARAM_RollDistance, currentExpiration), &quot;ShortCall-&quot; + Position.Adjustments);
-                modelPosition.AddLeg (newShortLeg);
-                var newLongLeg = CreateModelLeg (Buy, oldLongLeg.Qty, GetOptionByStrike (Call, oldLongLeg.Strike + (PARAM_RollDistance - 5), currentExpiration), &quot;LongCall-&quot; + Position.Adjustments);
-                modelPosition.AddLeg (newLongLeg);
+                var newShortLeg = CreateModelLeg(Sell, oldShortLeg.Qty, GetOptionByStrike(Call, oldShortLeg.Strike + PARAM_RollDistance, currentExpiration), &quot;ShortCall-&quot; + Position.Adjustments);
+                modelPosition.AddLeg(newShortLeg);
+                var newLongLeg = CreateModelLeg(Buy, oldLongLeg.Qty, GetOptionByStrike(Call, oldLongLeg.Strike +(PARAM_RollDistance - 5), currentExpiration), &quot;LongCall-&quot; + Position.Adjustments);
+                modelPosition.AddLeg(newLongLeg);
 
                 //Commit the Model Position to the Trade Log and add a comment
-                modelPosition.CommitTrade (&quot;Roll Upper Wing&quot;);
+                modelPosition.CommitTrade(&quot;Roll Upper Wing&quot;);
                 adjustment = true;
 
             }
@@ -386,168 +386,169 @@ try {
             // adjustment #3 - roll shorts when position delta greater than allowed range
             // Check if Short Strike Delta&apos;s within tolerance on downside
             // NOTE - the logic of rolling shorts back up/down to their original width before starting to roll the other side
-            // (like an accordian) is not yet implemented
+            //(like an accordian) is not yet implemented
 
-            var origShortLeg = Position.GetLegByName (&quot;ShortPut*&quot;);
-            if (origShortLeg != null) {
-                double delta = Math.Abs (origShortLeg.Delta);
-                if (currentExpiration == null) {
+            var origShortLeg = Position.GetLegByName(&quot;ShortPut*&quot;);
+            if(origShortLeg != null) {
+                double delta = Math.Abs(origShortLeg.Delta);
+                if(currentExpiration == null) {
                     return; // Haven&apos;t found an expiration matching our criteria
                 }
 
-                // we already did an adjustment
-                if (adjustment == true) return;
+                // we already did an adjustment so we&apos;re done
+                if(adjustment == true) return;
 
-                if (Position.Delta &gt; (PARAM_DeltaAdjustmentPointDownside * Position.GetLegByName (&quot;ShortPut*&quot;).Qty)) {
-                    WriteLog (&quot;Delta greater than &quot; + PARAM_DeltaAdjustmentPointDownside + &quot; per contract - &quot; + Position.Delta);
-                    WriteLog (&quot;Position.Tag=&quot; + Position.Tag);
-                    WriteLog (&quot;Short strike delta &gt; &quot; + PARAM_DeltaAdjustmentPointDownside + &quot; quantity: &quot; + Position.GetLegByName (&quot;ShortCall*&quot;).Qty + &quot; per contract - delta: &quot; + (PARAM_DeltaAdjustmentPointDownside * Position.GetLegByName (&quot;ShortPut*&quot;).Qty));
+                if(Position.Delta &gt;(PARAM_DeltaAdjustmentPointDownside * Position.GetLegByName(&quot;ShortPut*&quot;).Qty)) {
+                    WriteLog(&quot;Delta greater than &quot; + PARAM_DeltaAdjustmentPointDownside + &quot; per contract - &quot; + Position.Delta);
+                    WriteLog(&quot;Position.Tag=&quot; + Position.Tag);
+                    WriteLog(&quot;Short strike delta &gt; &quot; + PARAM_DeltaAdjustmentPointDownside + &quot; quantity: &quot; + Position.GetLegByName(&quot;ShortCall*&quot;).Qty + &quot; per contract - delta: &quot; +(PARAM_DeltaAdjustmentPointDownside * Position.GetLegByName(&quot;ShortPut*&quot;).Qty));
 
-                    if (Position.GetLegByName (&quot;ShortPut*&quot;).Strike &gt;= Position.GetLegByName (&quot;ShortCall*&quot;).Strike) {
-                        var oldShortLeg = Position.GetLegByName (&quot;ShortPut*&quot;).CreateClosingModelLeg ();
-                        var modelPosition = NewModelPosition ();
-                        modelPosition.AddLeg (oldShortLeg);
-                        var newShortLeg = CreateModelLeg (Sell, oldShortLeg.Qty, GetOptionByStrike (Put, oldShortLeg.Strike - 10, currentExpiration), &quot;ShortPut-&quot; + Position.Adjustments);
-                        modelPosition.AddLeg (newShortLeg);
-                        WriteLog (&quot;Short Put Strike: &quot; + (Position.GetLegByName (&quot;ShortPut*&quot;).Strike + &quot;&gt;= Short Call Strike: &quot; + Position.GetLegByName (&quot;ShortCall*&quot;).Strike));
-                        modelPosition.CommitTrade (&quot;Roll Puts Down&quot;);
+                    if(Position.GetLegByName(&quot;ShortPut*&quot;).Strike &gt;= Position.GetLegByName(&quot;ShortCall*&quot;).Strike) {
+                        var oldShortLeg = Position.GetLegByName(&quot;ShortPut*&quot;).CreateClosingModelLeg();
+                        var modelPosition = NewModelPosition();
+                        modelPosition.AddLeg(oldShortLeg);
+                        var newShortLeg = CreateModelLeg(Sell, oldShortLeg.Qty, GetOptionByStrike(Put, oldShortLeg.Strike - 10, currentExpiration), &quot;ShortPut-&quot; + Position.Adjustments);
+                        modelPosition.AddLeg(newShortLeg);
+                        WriteLog(&quot;Short Put Strike: &quot; +(Position.GetLegByName(&quot;ShortPut*&quot;).Strike + &quot;&gt;= Short Call Strike: &quot; + Position.GetLegByName(&quot;ShortCall*&quot;).Strike));
+                        modelPosition.CommitTrade(&quot;Roll Puts Down&quot;);
                     } else {
-                        var oldShortLeg = Position.GetLegByName (&quot;ShortCall*&quot;).CreateClosingModelLeg ();
-                        var modelPosition = NewModelPosition ();
-                        modelPosition.AddLeg (oldShortLeg);
-                        var newShortLeg = CreateModelLeg (Sell, oldShortLeg.Qty, GetOptionByStrike (Call, oldShortLeg.Strike - 10, currentExpiration), &quot;ShortCall-&quot; + Position.Adjustments);
-                        modelPosition.AddLeg (newShortLeg);
-                        modelPosition.CommitTrade (&quot;Roll Calls Back (downside)&quot;);
-                        WriteLog (&quot;Short Put Strike: &quot; + (Position.GetLegByName (&quot;ShortPut*&quot;).Strike + &quot;&lt; Short Call Strike: &quot; + Position.GetLegByName (&quot;ShortCall*&quot;).Strike));
-                        WriteLog (&quot;New delta after rolling calls down: &quot; + Position.Delta + &quot; per contract delta: &quot; + (Position.Delta / Position.GetLegByName (&quot;ShortCall*&quot;).Qty));
+                        var oldShortLeg = Position.GetLegByName(&quot;ShortCall*&quot;).CreateClosingModelLeg();
+                        var modelPosition = NewModelPosition();
+                        modelPosition.AddLeg(oldShortLeg);
+                        var newShortLeg = CreateModelLeg(Sell, oldShortLeg.Qty, GetOptionByStrike(Call, oldShortLeg.Strike - 10, currentExpiration), &quot;ShortCall-&quot; + Position.Adjustments);
+                        modelPosition.AddLeg(newShortLeg);
+                        modelPosition.CommitTrade(&quot;Roll Calls Back(downside)&quot;);
+                        WriteLog(&quot;Short Put Strike: &quot; +(Position.GetLegByName(&quot;ShortPut*&quot;).Strike + &quot;&lt; Short Call Strike: &quot; + Position.GetLegByName(&quot;ShortCall*&quot;).Strike));
+                        WriteLog(&quot;New delta after rolling calls down: &quot; + Position.Delta + &quot; per contract delta: &quot; +(Position.Delta / Position.GetLegByName(&quot;ShortCall*&quot;).Qty));
                     }
                 }
             }
 
             //Check if Short Strike Delta&apos;s within tolerance on upside
-            origShortLeg = Position.GetLegByName (&quot;ShortCall*&quot;);
-            if (origShortLeg != null) {
+            origShortLeg = Position.GetLegByName(&quot;ShortCall*&quot;);
+            if(origShortLeg != null) {
                 //Find the month expiration cycle
-                var monthExpiration = GetExpiryByDTE (Position.GetLegByName (&quot;ShortPut*&quot;).DTE);
-                if (monthExpiration == null) {
+                var monthExpiration = GetExpiryByDTE(Position.GetLegByName(&quot;ShortPut*&quot;).DTE);
+                if(monthExpiration == null) {
                     return; // Haven&apos;t found an expiration matching our criteria
                 }
-                if (Position.Delta &lt; (PARAM_DeltaAdjustmentPointUpside * Position.GetLegByName (&quot;ShortCall*&quot;).Qty)) {
+                if(Position.Delta &lt;(PARAM_DeltaAdjustmentPointUpside * Position.GetLegByName(&quot;ShortCall*&quot;).Qty)) {
                     // we already did an adjustment
-                    if (adjustment == true) return;
+                    if(adjustment == true) return;
 
-                    WriteLog (&quot;Delta less than &quot; + PARAM_DeltaAdjustmentPointUpside + &quot; per contract - &quot; + Position.Delta);
-                    WriteLog (&quot;Position.Tag=&quot; + Position.Tag);
-                    WriteLog (&quot;Short strike delta &lt; &quot; + PARAM_DeltaAdjustmentPointUpside + &quot; quantity: &quot; + Position.GetLegByName (&quot;ShortCall*&quot;).Qty + &quot; per contract - delta: &quot; + Position.Delta);
+                    WriteLog(&quot;Delta less than &quot; + PARAM_DeltaAdjustmentPointUpside + &quot; per contract - &quot; + Position.Delta);
+                    WriteLog(&quot;Position.Tag=&quot; + Position.Tag);
+                    WriteLog(&quot;Short strike delta &lt; &quot; + PARAM_DeltaAdjustmentPointUpside + &quot; quantity: &quot; + Position.GetLegByName(&quot;ShortCall*&quot;).Qty + &quot; per contract - delta: &quot; + Position.Delta);
 
-                    if (Position.GetLegByName (&quot;ShortPut*&quot;).Strike &gt;= Position.GetLegByName (&quot;ShortCall*&quot;).Strike) {
-                        var oldShortLeg = Position.GetLegByName (&quot;ShortCall*&quot;).CreateClosingModelLeg ();
-                        var modelPosition = NewModelPosition ();
-                        modelPosition.AddLeg (oldShortLeg);
-                        var newShortLeg = CreateModelLeg (Sell, oldShortLeg.Qty, GetOptionByStrike (Call, oldShortLeg.Strike + 10, currentExpiration), &quot;ShortCall-&quot; + Position.Adjustments);
-                        modelPosition.AddLeg (newShortLeg);
-                        modelPosition.CommitTrade (&quot;Roll Calls Up&quot;);
-                        WriteLog (&quot;Short Put Strike: &quot; + (Position.GetLegByName (&quot;ShortPut*&quot;).Strike + &quot;&gt;= Short Call Strike: &quot; + Position.GetLegByName (&quot;ShortCall*&quot;).Strike));
-                        WriteLog (&quot;New delta after rolling short calls up: &quot; + Position.Delta + &quot; per contract delta: &quot; + (Position.Delta / Position.GetLegByName (&quot;ShortCall*&quot;).Qty));;
+                    if(Position.GetLegByName(&quot;ShortPut*&quot;).Strike &gt;= Position.GetLegByName(&quot;ShortCall*&quot;).Strike) {
+                        var oldShortLeg = Position.GetLegByName(&quot;ShortCall*&quot;).CreateClosingModelLeg();
+                        var modelPosition = NewModelPosition();
+                        modelPosition.AddLeg(oldShortLeg);
+                        var newShortLeg = CreateModelLeg(Sell, oldShortLeg.Qty, GetOptionByStrike(Call, oldShortLeg.Strike + 10, currentExpiration), &quot;ShortCall-&quot; + Position.Adjustments);
+                        modelPosition.AddLeg(newShortLeg);
+                        modelPosition.CommitTrade(&quot;Roll Calls Up&quot;);
+                        WriteLog(&quot;Short Put Strike: &quot; +(Position.GetLegByName(&quot;ShortPut*&quot;).Strike + &quot;&gt;= Short Call Strike: &quot; + Position.GetLegByName(&quot;ShortCall*&quot;).Strike));
+                        WriteLog(&quot;New delta after rolling short calls up: &quot; + Position.Delta + &quot; per contract delta: &quot; +(Position.Delta / Position.GetLegByName(&quot;ShortCall*&quot;).Qty));;
                     } else {
-                        var oldShortLeg = Position.GetLegByName (&quot;ShortPut*&quot;).CreateClosingModelLeg ();
-                        var modelPosition = NewModelPosition ();
-                        modelPosition.AddLeg (oldShortLeg);
-                        var newShortLeg = CreateModelLeg (Sell, oldShortLeg.Qty, GetOptionByStrike (Put, oldShortLeg.Strike + 10, currentExpiration), &quot;ShortPut-&quot; + Position.Adjustments);
-                        modelPosition.AddLeg (newShortLeg);
-                        modelPosition.CommitTrade (&quot;Roll Puts Back (upside)&quot;);
-                        WriteLog (&quot;Short Put Strike: &quot; + (Position.GetLegByName (&quot;ShortPut*&quot;).Strike + &quot;&lt; Short Call Strike: &quot; + Position.GetLegByName (&quot;ShortCall*&quot;).Strike));
-                        WriteLog (&quot;New delta after rolling short puts up: &quot; + Position.Delta + &quot; per contract delta: &quot; + (Position.Delta / Position.GetLegByName (&quot;ShortCall*&quot;).Qty));;
+                        var oldShortLeg = Position.GetLegByName(&quot;ShortPut*&quot;).CreateClosingModelLeg();
+                        var modelPosition = NewModelPosition();
+                        modelPosition.AddLeg(oldShortLeg);
+                        var newShortLeg = CreateModelLeg(Sell, oldShortLeg.Qty, GetOptionByStrike(Put, oldShortLeg.Strike + 10, currentExpiration), &quot;ShortPut-&quot; + Position.Adjustments);
+                        modelPosition.AddLeg(newShortLeg);
+                        modelPosition.CommitTrade(&quot;Roll Puts Back(upside)&quot;);
+                        WriteLog(&quot;Short Put Strike: &quot; +(Position.GetLegByName(&quot;ShortPut*&quot;).Strike + &quot;&lt; Short Call Strike: &quot; + Position.GetLegByName(&quot;ShortCall*&quot;).Strike));
+                        WriteLog(&quot;New delta after rolling short puts up: &quot; + Position.Delta + &quot; per contract delta: &quot; +(Position.Delta / Position.GetLegByName(&quot;ShortCall*&quot;).Qty));;
                     }
 
                 }
             }
 
+			// Adjustment #4 
             // this should roll spread up when short gets below 10 deltas, up to 15-17 and roll long same distance
-            if (Position.GetLegByName (&quot;ShortPut*&quot;).Delta &gt; -10) {
-                WriteLog (&quot;&gt;-10 Short put delta is: &quot; + Position.GetLegByName (&quot;ShortPut*&quot;).Delta);
-                var oldShortLeg = Position.GetLegByName (&quot;ShortPut*&quot;).CreateClosingModelLeg ();
-                var oldLongLeg = Position.GetLegByName (&quot;LongPut*&quot;).CreateClosingModelLeg ();
-                var modelPosition = NewModelPosition ();
-                modelPosition.AddLeg (oldShortLeg);
-                modelPosition.AddLeg (oldLongLeg);
-                var newShortLeg = CreateModelLeg (Sell, oldShortLeg.Qty, GetOptionByDelta (Put, -16, currentExpiration), &quot;ShortPut-&quot; + Position.Adjustments);
-                modelPosition.AddLeg (newShortLeg);
+			// NOTE - currently only does the roll up on the put side, don&apos;t think its a good idea on the call side
+            if(Position.GetLegByName(&quot;ShortPut*&quot;).Delta &gt; -10) {
+                WriteLog(&quot;&gt;-10 Short put delta is: &quot; + Position.GetLegByName(&quot;ShortPut*&quot;).Delta);
+                var oldShortLeg = Position.GetLegByName(&quot;ShortPut*&quot;).CreateClosingModelLeg();
+                var oldLongLeg = Position.GetLegByName(&quot;LongPut*&quot;).CreateClosingModelLeg();
+                var modelPosition = NewModelPosition();
+                modelPosition.AddLeg(oldShortLeg);
+                modelPosition.AddLeg(oldLongLeg);
+                var newShortLeg = CreateModelLeg(Sell, oldShortLeg.Qty, GetOptionByDelta(Put, -16, currentExpiration), &quot;ShortPut-&quot; + Position.Adjustments);
+                modelPosition.AddLeg(newShortLeg);
                 var longLegRollDistance = newShortLeg.Strike - oldShortLeg.Strike;
-                var newLongLeg = CreateModelLeg (Buy, oldLongLeg.Qty, GetOptionByStrike (Put, oldLongLeg.Strike + longLegRollDistance, currentExpiration), &quot;LongPut-&quot; + Position.Adjustments);
-                WriteLog (&quot; longLegRollDistance=&quot; + longLegRollDistance + &quot;newShortLeg.Strike=&quot; + newShortLeg.Strike + &quot; oldShortLeg.Strike=&quot; + oldShortLeg.Strike + &quot; newLongLeg.Strike=&quot; + newLongLeg.Strike + &quot; oldLongLeg.Strike=&quot; + oldLongLeg.Strike);
-                modelPosition.AddLeg (newLongLeg);
-                modelPosition.CommitTrade (&quot;Roll Put Spread Up&quot;);
-            }
-
-            //this is an ugly workaround for some data problem on 8-2-11 and 8-3-11 that causes my adjustment/exti rules to not be applied
-            //we&apos;re just closing the trade before the data problems begin 
-            if (Backtest.TradingDateTime.Date.ToString() == &quot;8/1/2011 12:00:00 AM&quot;) {
-                WriteLog (&quot;Closing due to rule for 8/1/2011&quot;);
-                Position.Close (&quot;Failed to lookup adjustment options - WORKAROUND for 8/1/2011, just exit&quot;);
+                var newLongLeg = CreateModelLeg(Buy, oldLongLeg.Qty, GetOptionByStrike(Put, oldLongLeg.Strike + longLegRollDistance, currentExpiration), &quot;LongPut-&quot; + Position.Adjustments);
+                WriteLog(&quot; longLegRollDistance=&quot; + longLegRollDistance + &quot;newShortLeg.Strike=&quot; + newShortLeg.Strike + &quot; oldShortLeg.Strike=&quot; + oldShortLeg.Strike + &quot; newLongLeg.Strike=&quot; + newLongLeg.Strike + &quot; oldLongLeg.Strike=&quot; + oldLongLeg.Strike);
+                modelPosition.AddLeg(newLongLeg);
+                modelPosition.CommitTrade(&quot;Roll Put Spread Up&quot;);
             }
         }
     }
-} catch (Exception ex) {
-    WriteLog (&quot;Try/Catch hit in adjustment block&quot;);
+} catch(Exception ex) {
+    WriteLog(&quot;Try/Catch hit in adjustment block&quot;);
 }
 
 //------- E X I T   R U L E S -------
 try {
-    if (Position.IsOpen == true) {
+    if(Position.IsOpen == true) {
 
-        if ((currentTime &gt;= startTime) &amp;&amp; (currentTime &lt;= endTime)) {
+        if((currentTime &gt;= startTime) &amp;&amp;(currentTime &lt;= endTime)) {
 
             double PnL = 0;
-            if (Backtest.Tag != null) { PnL = (double) Backtest.Tag; }
+            if(Backtest.Tag != null) { PnL =(double) Backtest.Tag; }
 
             //Check Profit Target
-            if (Position.PnL &gt;= ((PARAM_InitialMargin * PARAM_ProfitTarget) / 100)) {
-                Position.Close (&quot;Hit Profit Target&quot;);
+            if(Position.PnL &gt;=((PARAM_InitialMargin * PARAM_ProfitTarget) / 100)) {
+                Position.Close(&quot;Hit Profit Target&quot;);
                 Backtest.Tag = PnL + Position.PnL - Position.Commission;
-                WriteLog (&quot;Backtest.Tag=&quot; + Backtest.Tag);
-                WriteLog (&quot;Position.PnL=&quot; + Position.PnL);
+                WriteLog(&quot;Backtest.Tag=&quot; + Backtest.Tag);
+                WriteLog(&quot;Position.PnL=&quot; + Position.PnL);
             }
 
             //Check Max Loss
-            if (Position.PnL &lt;= ((PARAM_InitialMargin * -PARAM_MaxLoss) / 100)) {
-                Position.Close (&quot;Hit Max Loss&quot;);
+            if(Position.PnL &lt;=((PARAM_InitialMargin * -PARAM_MaxLoss) / 100)) {
+                Position.Close(&quot;Hit Max Loss&quot;);
                 Backtest.Tag = PnL + Position.PnL - Position.Commission;
-                WriteLog (&quot;Backtest.Tag=&quot; + Backtest.Tag);
-                WriteLog (&quot;Position.PnL=&quot; + Position.PnL);
+                WriteLog(&quot;Backtest.Tag=&quot; + Backtest.Tag);
+                WriteLog(&quot;Position.PnL=&quot; + Position.PnL);
             }
 
             //Check Minimum DTE
-            if (Position.DTE &lt;= PARAM_ExitDTE) {
-                Position.Close (&quot;Hit Minimum DTE&quot;);
+            if(Position.DTE &lt;= PARAM_ExitDTE) {
+                Position.Close(&quot;Hit Minimum DTE&quot;);
                 Backtest.Tag = PnL + Position.PnL - Position.Commission;
-                WriteLog (&quot;Backtest.Tag=&quot; + Backtest.Tag);
-                WriteLog (&quot;Position.PnL=&quot; + Position.PnL);
+                WriteLog(&quot;Backtest.Tag=&quot; + Backtest.Tag);
+                WriteLog(&quot;Position.PnL=&quot; + Position.PnL);
             }
 
             //Check Max Adjustments
-            if (Position.Adjustments &gt;= PARAM_MaxAdjustments) {
-                Position.Close (&quot;Hit Max Adjustments&quot;);
+            if(Position.Adjustments &gt;= PARAM_MaxAdjustments) {
+                Position.Close(&quot;Hit Max Adjustments&quot;);
                 Backtest.Tag = PnL + Position.PnL - Position.Commission;
-                WriteLog (&quot;Backtest.Tag=&quot; + Backtest.Tag);
-                WriteLog (&quot;Position.PnL=&quot; + Position.PnL);
+                WriteLog(&quot;Backtest.Tag=&quot; + Backtest.Tag);
+                WriteLog(&quot;Position.PnL=&quot; + Position.PnL);
             }
 
             // even though it is cheating, don&apos;t initiate any trades on 8/21/15 and 8/24/15
             // because pricing data on 8/24 is a mess and it really throw off the backtest
-
-            if (Backtest.TradingDateTime.Date.ToString() == &quot;8/24/2015 12:00:00 AM&quot;) {
-                Position.Close (&quot;8/24/2015 data problem&quot;);
+            if(Backtest.TradingDateTime.Date.ToString() == &quot;8/24/2015 12:00:00 AM&quot;) {
+                Position.Close(&quot;8/24/2015 data problem&quot;);
                 return;
             }
-            if (Backtest.TradingDateTime.Date.ToString() == &quot;8/21/2015 12:00:00 AM&quot;) {
-                Position.Close (&quot;8/21/2015 data problem&quot;);
+            if(Backtest.TradingDateTime.Date.ToString() == &quot;8/21/2015 12:00:00 AM&quot;) {
+                Position.Close(&quot;8/21/2015 data problem&quot;);
                 return;
+            }
+			
+            //this is an ugly workaround for some data problem on 8-2-11 and 8-3-11 that causes my adjustment/exti rules to not be applied
+            //we&apos;re just closing the trade before the data problems begin 
+            if(Backtest.TradingDateTime.Date.ToString() == &quot;8/1/2011 12:00:00 AM&quot;) {
+                WriteLog(&quot;Closing due to rule for 8/1/2011&quot;);
+                Position.Close(&quot;Failed to lookup adjustment options - WORKAROUND for 8/1/2011, just exit&quot;);
             }
         }
     }
-} catch (Exception ex) {
-    WriteLog (&quot;Try/Catch hit in adjustment block&quot;);
+} catch(Exception ex) {
+    WriteLog(&quot;Try/Catch hit in adjustment block&quot;);
 }</TickEventCode>
     </StrategyCode>
 </AlgoNETExplorer>

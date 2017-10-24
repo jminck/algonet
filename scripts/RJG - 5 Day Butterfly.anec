@@ -29,7 +29,7 @@ int PARAM_WingWidth=40;
 int PARAM_NumberOfContracts=10;
 int PARAM_ProfitTarget=20;
 int PARAM_MaxLoss=30;
-int PARAM_ExitDTE=2;  //max days to expiry - get out how many days before expiry?
+int PARAM_ExitDTE=1;  //max days to expiry - get out how many days before expiry?
 
 
 try {
