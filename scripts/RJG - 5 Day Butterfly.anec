@@ -25,7 +25,7 @@ int PARAM_FarMonth=8;
 int PARAM_UnderlyingMovementSDdown=-2;
 int PARAM_UnderlyingMovementSDup=2;
 int PARAM_UnderlyingMovementSDDays=5;
-int PARAM_WingWidth=30;
+int PARAM_WingWidth=40;
 int PARAM_NumberOfContracts=10;
 int PARAM_ProfitTarget=20;
 int PARAM_MaxLoss=30;
@@ -65,12 +65,12 @@ if(Position.IsOpen==false) {
     if (monthExpiration == null) return;   // Haven&apos;t found an expiration matching our criteria
 	
 	TimeSpan currentTime=Backtest.TradingDateTime.ToLocalTime().TimeOfDay;		    //Convert from UTC to localtime
-    TimeSpan startTime = new TimeSpan(9, 30, 0); 							        //10:00 AM
-    TimeSpan endTime = new TimeSpan(9, 30, 0); 							            //1:30 PM
+    TimeSpan TradeTime = new TimeSpan(9, 30, 0); 							        //10:00 AM
+//    TimeSpan endTime = new TimeSpan(9, 30, 0); 							            //1:30 PM
 	
 	if (Backtest.TradingDateTime.DayOfWeek != DayOfWeek.Monday) return;
 	
-    if (currentTime == startTime) {
+    if (currentTime == TradeTime) {
 
 	    //Create a new Model Position and build an ATM Call Butterfly using the expiration cycles we found above.
 	    var modelPosition=NewModelPosition();
@@ -83,6 +83,7 @@ if(Position.IsOpen==false) {
 
 //------- A D J U S T M E N T   R U L E S -------
 // none
+
 
 //------- E X I T   R U L E S -------
 if(Position.IsOpen==true) {

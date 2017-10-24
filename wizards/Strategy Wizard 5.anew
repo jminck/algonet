@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="iso-8859-1" ?>
+
+<AlgoNETExplorer>
+    <StrategyWizard StrategyName="Strategy Wizard 5" StrategyType="Butterfly">
+        <Description />
+        <NumberOfContracts>10</NumberOfContracts>
+        <EntryConditions>
+            <DTE DTE1="3" DTE2="8" />
+            <UnderlyingMovementSD Checked="False" SD1="-1" SD2="1" Days="5" />
+            <FlattenDeltas Checked="False" />
+            <WingWidth>30</WingWidth>
+            <TradeAction Transaction="Buy" Type="Call Butterfly" />
+        </EntryConditions>
+        <AdjustmentConditions>
+            <UnderlyingMoveUp Checked="False" Value="75" Action="Roll to ATM" />
+            <UnderlyingMoveDown Checked="False" Value="75" Action="Roll to ATM" />
+        </AdjustmentConditions>
+        <ExitConditions>
+            <ProfitTarget Checked="True" Value="15" />
+            <MaxLoss Checked="True" Value="10" />
+            <DTE Checked="True" Value="5" />
+            <MaxAdjustments Checked="True" Value="5" />
+        </ExitConditions>
+    </StrategyWizard>
+</AlgoNETExplorer>
