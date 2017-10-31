@@ -10,7 +10,7 @@
 
 //------- P E R F O R M A N C E   P A R A M E T E R S -------
 Backtest.Configuration.UseWeekly = true;
-Backtest.Configuration.UseQuarterly = false;
+Backtest.Configuration.UseQuarterly = true;
 Backtest.Configuration.MaxExpirationDTE = 90;
 Backtest.Configuration.CommissionRates.OptionPerContract = 1.0;
 
@@ -27,7 +27,7 @@ int PARAM_BackMonthMinDTE = 28 + PARAM_FrontMonthMinDTE;
 int PARAM_ProfitTarget = 10;
 int PARAM_MaxLoss = 15;
 int PARAM_ExitDTE = 5;
-int PARAM_MaxAdjustments = 6;
+int PARAM_MaxAdjustments = 10;
 
 //max underlying IV when initiating a trade
 int PARAM_MaxUnderlyingIV = 12;
@@ -43,8 +43,8 @@ int PARAM_CallDiagonalWidth = 20;
 int PARAM_PutDiagonalWidth = 20;
 
 //Where, in relation to current price of underlying, do we center the butterfly
-int PARAM_FrontMonthCallDelta = 25;
-int PARAM_FrontMonthPutDelta = 25;
+int PARAM_FrontMonthCallDelta = 30;
+int PARAM_FrontMonthPutDelta = 35;
 
 //entry rules for market condition
 double PARAM_UnderlyingMovementSDdown = -1.5;
@@ -105,7 +105,7 @@ if(Backtest.TradingDateTime.ToLocalTime().TimeOfDay == startTime) {
 		WriteLog(&quot;PARAM_CallDiagonalWidth=&quot; + PARAM_CallDiagonalWidth);
 		WriteLog(&quot;PARAM_PutDiagonalWidth=&quot; + PARAM_PutDiagonalWidth);
 		WriteLog(&quot;PARAM_FrontMonthCallDelta=&quot; + PARAM_FrontMonthCallDelta);
-		WriteLog(&quot;PARAM_FrontMonthPutDelta=&quot; + PARAM_PutDiagonalWidth);
+		WriteLog(&quot;PARAM_FrontMonthPutDelta=&quot; + PARAM_FrontMonthPutDelta);
         WriteLog(&quot;PARAM_ProfitTarget: &quot; + PARAM_ProfitTarget);
         WriteLog(&quot;PARAM_MaxLoss: &quot; + PARAM_MaxLoss);
         WriteLog(&quot;PARAM_MaxUnderlyingIV: &quot; + PARAM_MaxUnderlyingIV);
@@ -254,7 +254,7 @@ try {
 					}
 				}
         } else {
-            WriteLog(&quot;Not initiating a trade because Underlying.IV = &quot; + Underlying.IV + &quot; and max is 25&quot;);
+            WriteLog(&quot;Not initiating a trade because Underlying.IV = &quot; + Underlying.IV + &quot; and max is &quot; + PARAM_MaxUnderlyingIV);
         }
     }
 } catch(Exception ex) {
@@ -274,12 +274,13 @@ try {
 	var longPuts = Position.GetLegByName(&quot;LongPut*&quot;);
 	var shortPuts = Position.GetLegByName(&quot;ShortPut*&quot;);
 	int callWidth = (int) longCalls.Strike - (int) shortCalls.Strike;
-	WriteLog(&quot;Call width=&quot; + callWidth);
+	//WriteLog(&quot;Call width=&quot; + callWidth);
 	int putWidth = (int) shortPuts.Strike - (int) longPuts.Strike;
-	WriteLog(&quot;Put width=&quot; + putWidth);
+	//WriteLog(&quot;Put width=&quot; + putWidth);
 	int deltaAdd = (deltas / longCalls.Qty);
 	int deltaSubtract = ((deltas / longPuts.Qty)/2);
 	var backMonthExpiration = GetExpiryByDTE(Position.GetLegByName(&quot;LongCall*&quot;).DTE);
+	var nearMonthExpiration = GetExpiryByDTE(Position.GetLegByName(&quot;ShortPut*&quot;).DTE);
 	if (deltas &lt; (longCalls.Qty * -10)) 
 		{
 		WriteLog(&quot;deltas &lt; (longCalls.Qty * -10)&quot;);
@@ -310,8 +311,6 @@ try {
 	}
 	
 	//downside adjustment
-
-	backMonthExpiration = GetExpiryByDTE(Position.GetLegByName(&quot;LongPut*&quot;).DTE);
 	if (deltas &gt; (longPuts.Qty * 10)) 
 		{
 		WriteLog(&quot;deltas &gt; (longPuts.Qty * 10)&quot;);
@@ -343,6 +342,55 @@ try {
             modelPosition.CommitTrade(&quot;Roll Long Puts&quot;);
 	    }
 	}
+		
+	//sell 1/2 of the spreads on the side being pressed when 1/2 way between the short and expiration BE
+	//don&apos;t want this being triggered to to sag in the middle, so only beyond our longs
+	var shortCall = Position.GetLegByName(&quot;ShortCall*&quot;);
+	var shortPut = Position.GetLegByName(&quot;ShortPut*&quot;);
+	var longCall = Position.GetLegByName(&quot;LongCall*&quot;);
+	var longPut = Position.GetLegByName(&quot;LongPut*&quot;);
+	if (Underlying.Last &gt;=  shortCall.Strike) {
+		double upperMidPoint = (shortCall.Strike + Position.Expiration().UpperBE) / 2;
+		if (Underlying.Last &gt;= upperMidPoint) {
+			//only remove 1/2 the spreads one time	
+			if (shortPut.Qty == shortCall.Qty) {
+	            WriteLog(&quot;upperMidPoint=&quot; + upperMidPoint);
+				var modelPosition=NewModelPosition(); 
+				var closingShortLeg = shortCall.CreateClosingModelLeg();
+				modelPosition.AddLeg(closingShortLeg);
+	        	var openingShortLeg=CreateModelLeg(SELL, (int) shortCall.Qty/2, GetOptionByDelta(Call, (shortCall.Strike), nearMonthExpiration), &quot;ShortCall-&quot; + Position.Adjustments);
+				modelPosition.AddLeg(openingShortLeg);
+				var closingLongLeg = longCall.CreateClosingModelLeg();
+				modelPosition.AddLeg(closingLongLeg);
+				var openingLongLeg = CreateModelLeg(BUY, (int) longCall.Qty/2,  GetOptionByDelta(Call, (longCall.Strike), backMonthExpiration), &quot;LongCall-&quot; + Position.Adjustments);
+	        	modelPosition.AddLeg(openingLongLeg);
+	            //Commit the Model Position to the Trade Log and add a comment
+	            modelPosition.CommitTrade(&quot;Close 1/2 the calls&quot;);
+			}
+		}
+	}
+	if (Underlying.Last &lt;=  shortPut.Strike) {
+		double lowerMidPoint = (shortPut.Strike + Position.Expiration().LowerBE) / 2;
+		if (Underlying.Last &lt;= lowerMidPoint) {
+			//only remove 1/2 the spreads one time
+			if (shortPut.Qty == shortCall.Qty) {
+	            WriteLog(&quot;lowerMidPoint=&quot; + lowerMidPoint);
+				var modelPosition=NewModelPosition();
+				var closingShortLeg = shortPut.CreateClosingModelLeg();
+				modelPosition.AddLeg(closingShortLeg);
+	        	var openingShortLeg=CreateModelLeg(SELL, (int) shortPut.Qty/2, GetOptionByDelta(Put, (shortPut.Strike), nearMonthExpiration), &quot;ShortPut-&quot; + Position.Adjustments);
+				modelPosition.AddLeg(openingShortLeg);
+				var closingLongLeg = longPut.CreateClosingModelLeg();
+				modelPosition.AddLeg(closingLongLeg);
+				var openingLongLeg = CreateModelLeg(BUY, (int) longPut.Qty/2, GetOptionByDelta(Put, (longPut.Strike), backMonthExpiration), &quot;LongPut-&quot; + Position.Adjustments);
+	        	modelPosition.AddLeg(openingLongLeg);
+
+	            //Commit the Model Position to the Trade Log and add a comment
+	            modelPosition.CommitTrade(&quot;Close 1/2 the puts&quot;);
+			}
+		}
+	}
+	
 
 } catch(Exception ex) {
     WriteLog(&quot;Try/Catch hit in adjustment block&quot;);
