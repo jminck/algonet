@@ -91,6 +91,64 @@ TimeSpan startTime10AM = new TimeSpan(10, 0, 0);
 DateTime PARAM_InitiationDayMin = new DateTime(2000, 1, PARAM_InitiationDayMinimum);
 DateTime PARAM_InitiationDayMax = new DateTime(2999, 12, PARAM_InitiationDayMaximum);
 
+
+//arrays of low vol days
+bool okToTrade = true;
+
+DateTime[] vixUnder12 = new DateTime[]
+{
+new DateTime(2013, 3, 11), new DateTime(2013, 3, 14), new DateTime(2013, 3, 15), 
+new DateTime(2014, 5, 22), new DateTime(2014, 5, 23), new DateTime(2014, 5, 27), new DateTime(2014, 5, 28), new DateTime(2014, 5, 29), new DateTime(2014, 5, 30), new DateTime(2014, 6, 2),
+new DateTime(2014, 6, 3), new DateTime(2014, 6, 5), new DateTime(2014, 6, 6), new DateTime(2014, 6, 9), new DateTime(2014, 6, 10), new DateTime(2014, 6, 11), new DateTime(2014, 6, 18),
+new DateTime(2014, 6, 19), new DateTime(2014, 6, 20), new DateTime(2014, 6, 23), new DateTime(2014, 6, 24), new DateTime(2014, 6, 25), new DateTime(2014, 6, 27), new DateTime(2014, 6, 30),
+new DateTime(2014, 7, 1), new DateTime(2014, 7, 2), new DateTime(2014, 7, 3), new DateTime(2014, 7, 7), new DateTime(2014, 7, 9), new DateTime(2014, 7, 14), new DateTime(2014, 7, 15),
+new DateTime(2014, 7, 16), new DateTime(2014, 7, 22), new DateTime(2014, 7, 23), new DateTime(2014, 7, 24), new DateTime(2014, 8, 20), new DateTime(2014, 8, 22), new DateTime(2014, 8, 25),
+new DateTime(2014, 8, 26), new DateTime(2014, 8, 27), new DateTime(2014, 12, 5), new DateTime(2015, 7, 17), new DateTime(2015, 8, 5), new DateTime(2016, 7, 20), new DateTime(2016, 8, 5),
+new DateTime(2016, 8, 8), new DateTime(2016, 8, 9), new DateTime(2016, 8, 10), new DateTime(2016, 8, 11), new DateTime(2016, 8, 12), new DateTime(2016, 8, 15), new DateTime(2016, 8, 18), 
+new DateTime(2016, 8, 19), new DateTime(2016, 12, 6), new DateTime(2016, 12, 7), new DateTime(2016, 12, 20), new DateTime(2016, 12, 21), new DateTime(2016, 12, 22), new DateTime(2016, 12, 23),
+new DateTime(2017, 1, 5), new DateTime(2017, 1, 6), new DateTime(2017, 1, 9), new DateTime(2017, 1, 10), new DateTime(2017, 1, 11), new DateTime(2017, 1, 12), new DateTime(2017, 1, 13),
+new DateTime(2017, 1, 24), new DateTime(2017, 1, 25), new DateTime(2017, 1, 26), new DateTime(2017, 1, 27), new DateTime(2017, 2, 1), new DateTime(2017, 2, 3), new DateTime(2017, 2, 6),
+new DateTime(2017, 2, 7), new DateTime(2017, 2, 8), new DateTime(2017, 2, 9), new DateTime(2017, 2, 10), new DateTime(2017, 2, 13), new DateTime(2017, 2, 14), new DateTime(2017, 2, 15),
+new DateTime(2017, 2, 17), new DateTime(2017, 2, 21), new DateTime(2017, 2, 22), new DateTime(2017, 2, 24), new DateTime(2017, 2, 27), new DateTime(2017, 3, 3), new DateTime(2017, 3, 6),
+new DateTime(2017, 3, 7), new DateTime(2017, 3, 8), new DateTime(2017, 3, 10), new DateTime(2017, 3, 13), new DateTime(2017, 3, 14), new DateTime(2017, 3, 15), new DateTime(2017, 3, 16),
+new DateTime(2017, 3, 17), new DateTime(2017, 3, 20), new DateTime(2017, 3, 21), new DateTime(2017, 3, 29), new DateTime(2017, 3, 30), new DateTime(2017, 4, 5), new DateTime(2017, 4, 24), 
+new DateTime(2017, 4, 25), new DateTime(2017, 4, 26), new DateTime(2017, 4, 27), new DateTime(2017, 4, 28), new DateTime(2017, 5, 1), new DateTime(2017, 5, 2), new DateTime(2017, 5, 3),
+new DateTime(2017, 5, 4), new DateTime(2017, 5, 5), new DateTime(2017, 5, 8), new DateTime(2017, 5, 11), new DateTime(2017, 5, 12), new DateTime(2017, 5, 15), new DateTime(2017, 5, 16),
+new DateTime(2017, 5, 22), new DateTime(2017, 5, 23), new DateTime(2017, 5, 24), new DateTime(2017, 5, 25), new DateTime(2017, 5, 26), new DateTime(2017, 5, 30), new DateTime(2017, 5, 31),
+new DateTime(2017, 6, 1), new DateTime(2017, 6, 6), new DateTime(2017, 6, 7), new DateTime(2017, 6, 8), new DateTime(2017, 6, 9), new DateTime(2017, 6, 12), new DateTime(2017, 6, 13),
+new DateTime(2017, 6, 14), new DateTime(2017, 6, 15), new DateTime(2017, 6, 16), new DateTime(2017, 6, 19), new DateTime(2017, 6, 20), new DateTime(2017, 6, 21), new DateTime(2017, 6, 22),
+new DateTime(2017, 6, 23), new DateTime(2017, 6, 26), new DateTime(2017, 6, 27), new DateTime(2017, 6, 28), new DateTime(2017, 6, 30), new DateTime(2017, 7, 3), new DateTime(2017, 7, 5),
+new DateTime(2017, 7, 7), new DateTime(2017, 7, 10), new DateTime(2017, 7, 11), new DateTime(2017, 7, 12), new DateTime(2017, 7, 13), new DateTime(2017, 7, 18), new DateTime(2017, 7, 27),
+new DateTime(2017, 7, 28), new DateTime(2017, 7, 31), new DateTime(2017, 8, 1), new DateTime(2017, 8, 2), new DateTime(2017, 8, 3), new DateTime(2017, 8, 4), new DateTime(2017, 8, 7),
+new DateTime(2017, 8, 8), new DateTime(2017, 8, 9), new DateTime(2017, 8, 15), new DateTime(2017, 8, 16), new DateTime(2017, 8, 23), new DateTime(2017, 8, 25), new DateTime(2017, 8, 28),
+new DateTime(2017, 8, 30), new DateTime(2017, 8, 31), new DateTime(2017, 9, 1), new DateTime(2017, 9, 6), new DateTime(2017, 9, 7), new DateTime(2017, 9, 11), new DateTime(2017, 9, 12),
+new DateTime(2017, 9, 13), new DateTime(2017, 9, 14), new DateTime(2017, 9, 15), new DateTime(2017, 9, 18), new DateTime(2017, 9, 19), new DateTime(2017, 9, 20), new DateTime(2017, 9, 25),
+new DateTime(2017, 9, 26), new DateTime(2017, 9, 27), new DateTime(2017, 10, 9), new DateTime(2017, 10, 10), new DateTime(2017, 10, 11), new DateTime(2017, 10, 17), new DateTime(2017, 10, 18),
+new DateTime(2017, 10, 19), new DateTime(2017, 10, 23), new DateTime(2017, 10, 24), new DateTime(2017, 10, 26), new DateTime(2017, 10, 27), new DateTime(2017, 10, 30), new DateTime(2017, 10, 31),
+new DateTime(2017, 11, 1), new DateTime(2017, 11, 2), new DateTime(2017, 11, 9), new DateTime(2017, 11, 10), new DateTime(2017, 11, 13), new DateTime(2017, 11, 16), new DateTime(2017, 11, 17),
+new DateTime(2017, 11, 20), new DateTime(2017, 11, 21), new DateTime(2017, 11, 27), new DateTime(2017, 11, 29), new DateTime(2017, 11, 30), new DateTime(2017, 12, 4), new DateTime(2017, 12, 5),
+new DateTime(2017, 12, 6), new DateTime(2017, 12, 7)} ;
+
+DateTime[] vixUnder11 = new DateTime[]
+{
+new DateTime(2014, 6, 19), new DateTime(2014, 6, 20), new DateTime(2014, 7, 2), new DateTime(2014, 7, 3), new DateTime(2017, 1, 25), new DateTime(2017, 1, 26),
+new DateTime(2017, 1, 27), new DateTime(2017, 2, 10), new DateTime(2017, 4, 25), new DateTime(2017, 4, 26), new DateTime(2017, 4, 27),new DateTime(2017, 4, 28), 
+new DateTime(2017, 5, 1), new DateTime(2017, 5, 2), new DateTime(2017, 5, 3), new DateTime(2017, 5, 4), new DateTime(2017, 5, 5), new DateTime(2017, 5, 8),
+new DateTime(2017, 5, 11), new DateTime(2017, 5, 12), new DateTime(2017, 5, 15), new DateTime(2017, 5, 16), new DateTime(2017, 5, 23), new DateTime(2017, 5, 24),
+new DateTime(2017, 5, 25), new DateTime(2017, 5, 26), new DateTime(2017, 5, 30), new DateTime(2017, 5, 31), new DateTime(2017, 6, 1), new DateTime(2017, 6, 6),
+new DateTime(2017, 6, 7), new DateTime(2017, 6, 8), new DateTime(2017, 6, 9), new DateTime(2017, 6, 13), new DateTime(2017, 6, 14), new DateTime(2017, 6, 16),
+new DateTime(2017, 6, 19), new DateTime(2017, 6, 20), new DateTime(2017, 6, 21), new DateTime(2017, 6, 22), new DateTime(2017, 6, 23), new DateTime(2017, 6, 26), 
+new DateTime(2017, 6, 27), new DateTime(2017, 6, 28), new DateTime(2017, 7, 3), new DateTime(2017, 7, 12), new DateTime(2017, 7, 13), new DateTime(2017, 7, 18),
+new DateTime(2017, 7, 27), new DateTime(2017, 7, 28), new DateTime(2017, 7, 31), new DateTime(2017, 8, 1), new DateTime(2017, 8, 2), new DateTime(2017, 8, 3),
+new DateTime(2017, 8, 4), new DateTime(2017, 8, 7), new DateTime(2017, 8, 8), new DateTime(2017, 8, 31), new DateTime(2017, 9, 1), new DateTime(2017, 9, 11),
+new DateTime(2017, 9, 12), new DateTime(2017, 9, 13), new DateTime(2017, 9, 14), new DateTime(2017, 9, 15), new DateTime(2017, 9, 18), new DateTime(2017, 9, 19),
+new DateTime(2017, 9, 20), new DateTime(2017, 9, 25), new DateTime(2017, 9, 26), new DateTime(2017, 9, 27), new DateTime(2017, 10, 9), new DateTime(2017, 10, 10),
+new DateTime(2017, 10, 11), new DateTime(2017, 10, 17), new DateTime(2017, 10, 18), new DateTime(2017, 10, 19), new DateTime(2017, 10, 23), new DateTime(2017, 10, 24),
+new DateTime(2017, 10, 27), new DateTime(2017, 10, 30), new DateTime(2017, 10, 31), new DateTime(2017, 11, 1), new DateTime(2017, 11, 2), new DateTime(2017, 11, 9),
+new DateTime(2017, 11, 21), new DateTime(2017, 11, 27), new DateTime(2017, 11, 29), new DateTime(2017, 12, 7)} ;
+
+
+
 //log params at the beginning of the run
 if(Backtest.TradingDateTime.ToLocalTime().TimeOfDay == startTime) {
     if(Backtest.TradeCount == 1) {
@@ -117,8 +175,25 @@ try {
         }
     }
 
-    //------- E N T R Y   R U L E S -------
-    if(Position.IsOpen == false) {
+
+	//------- E N T R Y   R U L E S -------
+	if(Position.IsOpen==false) {
+
+		foreach( DateTime date in vixUnder11)
+		{
+			if (date.Date == Backtest.TradingDateTime.Date)
+			{
+				okToTrade = false;
+				WriteLog(date.Date +  &quot; - VOL TOO LOW TO INITIATE&quot;);
+			}
+		}
+		
+		if (okToTrade == false) 
+		{
+			WriteLog(&quot;okToTrade is &quot; + okToTrade.ToString());
+			return;
+		}
+		
 
         //reinitilize tag
         Position.Tag = null;

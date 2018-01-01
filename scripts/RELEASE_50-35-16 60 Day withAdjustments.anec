@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="iso-8859-1" ?>
 
 <AlgoNETExplorer>
-    <StrategyCode StrategyName="RELEASE_50-35-20 60 Day withAdjustments" Language="C# .NET">
+    <StrategyCode StrategyName="RELEASE_50-35-16 60 Day withAdjustments" Language="C# .NET">
         <TickEventCode>//
 // Copyright THJ Systems Ltd
 //
@@ -19,6 +19,7 @@ if (Backtest.UnderlyingSymbol == &quot;SPX&quot;) {
  Backtest.Configuration.PriceValidation.PositionConfirmationCount=3;
  Backtest.Configuration.PriceValidation.PositionPercChange=5;
 }
+
 
 //------- O P T I M I Z A T I O N   P A R A M E T E R S -------
 int PARAM_NearMonth = 60;
@@ -64,7 +65,7 @@ if (Position.IsOpen == true) {
 
 //Do not take action before 9:00 AM
 TimeSpan currentTime = Backtest.TradingDateTime.ToLocalTime().TimeOfDay; //Convert from UTC to localtime
-TimeSpan startTime = new TimeSpan(9, 0, 0); //9:00 AM
+TimeSpan startTime = new TimeSpan(8, 50, 0); //9:00 AM
 TimeSpan endTime = new TimeSpan(15, 5, 0); //3:00 PM
 
 //scalable margin - add 50% of PnL to size up

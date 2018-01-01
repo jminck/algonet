@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="iso-8859-1" ?>
 
 <AlgoNETExplorer>
-    <StrategyCode StrategyName="RJG - 5 Day Butterfly" Language="C# .NET">
+    <StrategyCode StrategyName="RJG - 5 Day Butterfly with adjustment" Language="C# .NET">
         <TickEventCode>if (Backtest.UnderlyingSymbol==&quot;SPX&quot;)
 {
 		Backtest.Configuration.PriceValidation.PositionConfirmationCount=3;
@@ -17,17 +17,18 @@
 //------- P E R F O R M A N C E   P A R A M E T E R S -------
 Backtest.Configuration.UseWeekly=true;
 Backtest.Configuration.UseQuarterly=false;
-Backtest.Configuration.MaxExpirationDTE=21; //maake larger than farmonth
+Backtest.Configuration.MaxExpirationDTE=7; //maake larger than farmonth
 
 //------- O P T I M I Z A T I O N   P A R A M E T E R S -------
-int PARAM_NearMonth = 15;  // in ONE, the Fri expiry is 4 days away from Mon
-int PARAM_FarMonth = 18;
-int PARAM_WingWidth = 30;
-int PARAM_NumberOfContracts = 15;
+int PARAM_NearMonth = 4;  // in ONE, the Fri expiry is 4 days away from Mon
+int PARAM_FarMonth = 6;
+int PARAM_WingWidth = 40;
+int PARAM_NumberOfContracts = 10;
 int PARAM_ProfitTarget = 20;
-int PARAM_MaxLoss = 20;
-int PARAM_ExitDTE = 5;  //max days to expiry - get out how many days before expiry?
+int PARAM_MaxLoss = 30;
+int PARAM_ExitDTE = 1;  //max days to expiry - get out how many days before expiry?
 
+var PARAM_DoAdjustments = false;
 
 try {
 
@@ -60,9 +61,54 @@ if(Position.IsOpen==false) {
 	}
 }
 
-//------- A D J U S T M E N T   R U L E S -------
-// none
 
+//------- A D J U S T M E N T   R U L E S -------
+if(Position.IsOpen==true &amp;&amp; PARAM_DoAdjustments==true) {
+	
+	int existingHedgeDelta  = 0;
+           foreach(Position.IPositionLeg leg in Position.GetAllLegs()) {
+				 if(leg.LegName.StartsWith(&quot;FlattenDeltaLeg&quot;)) {
+						WriteLog(&quot;evaluating &quot; + leg.LegName);
+						var existingHedge=leg;
+						existingHedgeDelta = (int) existingHedge.Delta;
+					}
+			}
+	
+	
+	if (Position.Adjustments  &lt;= 2) {
+		int deltaLimit = PARAM_NumberOfContracts * 13;
+		int hedgeSize = deltaLimit / 50;
+		var monthExpiration=GetExpiryByDTE(Position.GetLegByName(&quot;ShortLeg-*&quot;).DTE);
+		var modelPosition=NewModelPosition();
+		
+		//WriteLog(&quot;existingHedgeDelta=&quot; + existingHedge.Delta);
+		if (Position.Delta &lt; -deltaLimit) {
+			if (existingHedgeDelta &lt; 0) {
+			    var leg = Position.GetLegByName(&quot;FlattenDeltaLeg-*&quot;).CreateClosingModelLeg();
+                modelPosition.AddLeg (leg);
+                modelPosition.CommitTrade (&quot;Close Put Hedge&quot;);
+			} else {
+			    //Flatten Deltas by buying a single call option with the closest delta.
+			    var leg=CreateModelLeg(Buy, hedgeSize, GetOptionByDelta(Call, 50, monthExpiration),&quot;FlattenDeltaLeg-&quot; + Position.Adjustments);
+			    modelPosition.AddLeg(leg);
+				modelPosition.CommitTrade(modelPosition.Tag + &quot; Hedge&quot;);
+			}
+		}
+
+		if (Position.Delta &gt; deltaLimit) {
+			if (existingHedgeDelta &gt; 0) {
+			    var leg = Position.GetLegByName(&quot;FlattenDeltaLeg-*&quot;).CreateClosingModelLeg();
+                modelPosition.AddLeg (leg);
+                modelPosition.CommitTrade (&quot;Close Call Hedge&quot;);
+			} else {
+			    //Flatten Deltas by buying a single call option with the closest delta.
+			    var leg=CreateModelLeg(Buy, hedgeSize, GetOptionByDelta(Put, -50, monthExpiration),&quot;FlattenDeltaLeg-&quot; + Position.Adjustments);
+			    modelPosition.AddLeg(leg);
+				modelPosition.CommitTrade(modelPosition.Tag + &quot; Hedge&quot;);
+			}
+		}
+	}		
+}
 
 //------- E X I T   R U L E S -------
 if(Position.IsOpen==true) {
@@ -96,7 +142,6 @@ WriteLog(&quot;whichBE: &quot; + whichBE);
 WriteLog(&quot;PnLPercentage: &quot; + Position.PnLPercentage);
 
 
-//if (Position.Expiration().UpperBE &gt; 0) {
 
 	//Check Profit Target
     if(Position.PnLPercentage &gt;= PARAM_ProfitTarget) Position.Close(&quot;Hit Profit Target&quot;);
@@ -104,8 +149,11 @@ WriteLog(&quot;PnLPercentage: &quot; + Position.PnLPercentage);
     //Check Max Loss
     if(Position.PnLPercentage &lt;= -PARAM_MaxLoss) Position.Close(&quot;Hit Max Loss&quot;);
 
+    //Check Max Adjustments
+    if(Position.Adjustments &gt; 3) Position.Close(&quot;Hit Max Adjustments&quot;);
+		
 	//Check Minimum DTE
-    //if(Position.DTE &lt;= PARAM_ExitDTE) Position.Close(&quot;Hit Minimum DTE&quot;);
+    if(Position.DTE &lt;= PARAM_ExitDTE) Position.Close(&quot;Hit Minimum DTE&quot;);
 
 	//Check if Underlying moved outside of Upper BreakEven limit
 	if (whichBE == &quot;Upper&quot;) {

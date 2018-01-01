@@ -60,6 +60,19 @@ try
 {
 	if(Position.IsOpen==true) {
 
+		double diff=0;
+        double diffMax=0;
+        string legName=null;
+        foreach (IPositionLeg leg in Position.GetAllLegs()) {
+            if(leg.LegName.StartsWith(&quot;ShortLeg&quot;)) {		//we&apos;re only looking for the ShortLeg of each Butterfly
+                diff=leg.Strike - Underlying.Last;
+                if (Math.Abs(diff) &gt; diffMax) {
+                    diffMax=diff;
+                    legName=leg.LegName;
+                }
+            }
+        }
+		
 		double maxSDup=0.0;
 		double maxSDdown=0.0;
 		GetMaxSDMovement(1, ref maxSDup, ref maxSDdown);
@@ -131,18 +144,7 @@ try
 	    }
 	    if (Underlying.Last &lt;= targetLower) {
 	        //Find the farthest Butterfly away from underlying price and remember its adjustment number so we can reference it
-	        double diff=0;
-	        double diffMax=0;
-	        string legName=null;
-	        foreach (IPositionLeg leg in Position.GetAllLegs()) {
-	            if(leg.LegName.StartsWith(&quot;ShortLeg&quot;)) {		//we&apos;re only looking for the ShortLeg of each Butterfly
-	                diff=leg.Strike - Underlying.Last;
-	                if (Math.Abs(diff) &gt; diffMax) {
-	                    diffMax=diff;
-	                    legName=leg.LegName;
-	                }
-	            }
-	        }
+
 	        if (legName!=null) {
 	            //Extract the adjustment number
 	            string adjustmentID=legName.Substring(legName.LastIndexOf(&quot;-&quot;) + 1);

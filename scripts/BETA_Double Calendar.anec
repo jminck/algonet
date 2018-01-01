@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="iso-8859-1" ?>
 
 <AlgoNETExplorer>
-    <StrategyCode StrategyName="BETA_Double Diagonal" Language="C# .NET">
+    <StrategyCode StrategyName="BETA_Double Calendar" Language="C# .NET">
         <TickEventCode>//
 //
 //
@@ -20,31 +20,31 @@ if(Backtest.UnderlyingSymbol == &quot;SPX&quot;) {
 }
 
 //------- O P T I M I Z A T I O N   P A R A M E T E R S -------
-int PARAM_FrontMonthMinDTE = 35;
-int PARAM_FrontMonthMaxDTE = 36;
-int PARAM_BackMonthMaxDTE = 28 + PARAM_FrontMonthMaxDTE;
-int PARAM_BackMonthMinDTE = 28 + PARAM_FrontMonthMinDTE;
+int PARAM_FrontMonthMinDTE = 9;
+int PARAM_FrontMonthMaxDTE = 11;
+int PARAM_BackMonthMaxDTE = 14 + PARAM_FrontMonthMaxDTE;
+int PARAM_BackMonthMinDTE = 14 + PARAM_FrontMonthMinDTE;
 int PARAM_ProfitTarget = 10;
 int PARAM_MaxLoss = 15;
-int PARAM_ExitDTE = 5;
+int PARAM_ExitDTE = 3;
 int PARAM_MaxAdjustments = 10;
 
 //max underlying IV when initiating a trade
-int PARAM_MaxUnderlyingIV = 12;
+int PARAM_MaxUnderlyingIV = 15;
 
 //roll spreads out at percentage of expiration breakeven
-int PARAM_AdjustUpMoveLimit = 99;
-int PARAM_AdjustDownMoveLimit = 99;
+int PARAM_AdjustUpMoveLimit = 90;
+int PARAM_AdjustDownMoveLimit = 90;
 
 //width of call and put spreads
 //note we well change the width of the call spread to 35 to cut deltas in the entry blocl
 //if short deltas &gt; 3 when 50x40
-int PARAM_CallDiagonalWidth = 20;
-int PARAM_PutDiagonalWidth = 20;
+int PARAM_CallDiagonalWidth = 0;
+int PARAM_PutDiagonalWidth = 0;
 
 //Where, in relation to current price of underlying, do we center the butterfly
-int PARAM_FrontMonthCallDelta = 30;
-int PARAM_FrontMonthPutDelta = 35;
+int PARAM_FrontMonthCallDelta = 40;
+int PARAM_FrontMonthPutDelta = 25;
 
 //entry rules for market condition
 double PARAM_UnderlyingMovementSDdown = -1.5;
@@ -280,7 +280,7 @@ try {
 					return; // Haven&apos;t found an expiration matching our criteria
 				}
 				
-                //Create a new Model Position and build an Iron Butterfly using the expiration cycles we found above.
+                //Create a new Model Position and build a doulbe calendar using the expiration cycles we found above.
                 var modelPosition = NewModelPosition();
                 var legShortPut = CreateModelLeg(SELL, 1, GetOptionByDelta(Put,-PARAM_FrontMonthPutDelta, frontMonthExpiration), &quot;ShortPut-&quot; + Position.Adjustments);
                 modelPosition.AddLeg(legShortPut);
@@ -337,138 +337,7 @@ try {
 //------- A D J U S T M E N T   R U L E S -------
 //
 
-try {
-	int deltas = (int) Position.Delta;
-	WriteLog(&quot;Position Deltas=&quot; + deltas);
-	
-	//upside adjustment
-	var longCalls = Position.GetLegByName(&quot;LongCall*&quot;);
-	var shortCalls = Position.GetLegByName(&quot;ShortCall*&quot;);
-	var longPuts = Position.GetLegByName(&quot;LongPut*&quot;);
-	var shortPuts = Position.GetLegByName(&quot;ShortPut*&quot;);
-	int callWidth = (int) longCalls.Strike - (int) shortCalls.Strike;
-	//WriteLog(&quot;Call width=&quot; + callWidth);
-	int putWidth = (int) shortPuts.Strike - (int) longPuts.Strike;
-	//WriteLog(&quot;Put width=&quot; + putWidth);
-	int deltaAdd = (deltas / longCalls.Qty);
-	int deltaSubtract = ((deltas / longPuts.Qty)/2);
-	var backMonthExpiration = GetExpiryByDTE(Position.GetLegByName(&quot;LongCall*&quot;).DTE);
-	var nearMonthExpiration = GetExpiryByDTE(Position.GetLegByName(&quot;ShortPut*&quot;).DTE);
-	if (deltas &lt; (longCalls.Qty * -10)) 
-		{
-		WriteLog(&quot;deltas &lt; (longCalls.Qty * -10)&quot;);
-		WriteLog(deltas + &quot;&lt;&quot; + (longCalls.Qty * -10));
-	
-		if (putWidth &lt; 20) {
-		//Roll puts back if we&apos;ve narrowed put width
-            var modelPosition=NewModelPosition(); 
-        	var closingLeg=longPuts.CreateClosingModelLeg();
-			modelPosition.AddLeg(closingLeg);
-			WriteLog(&quot;Put delta &quot; + longPuts.Delta + &quot; deltas to subtract &quot; + deltaSubtract + &quot; new delta is &quot; + (longPuts.Delta - deltaSubtract));
-			var legLongPut = CreateModelLeg(BUY, longPuts.Qty, GetOptionByDelta(Put, (longPuts.Delta - deltaSubtract), backMonthExpiration), &quot;LongPut-&quot; + Position.Adjustments);
-        	modelPosition.AddLeg(legLongPut);
 
-            //Commit the Model Position to the Trade Log and add a comment
-            modelPosition.CommitTrade(&quot;Roll Long Puts Back Down&quot;);
-	    } else {
-		 //else roll calls up
-            var modelPosition=NewModelPosition(); 
-        	var closingLeg=longCalls.CreateClosingModelLeg();
-			modelPosition.AddLeg(closingLeg);
-			var legLongCall = CreateModelLeg(BUY, longCalls.Qty, GetOptionByDelta(Call, (longCalls.Delta - deltaAdd), backMonthExpiration), &quot;LongCall-&quot; + Position.Adjustments);
-        	modelPosition.AddLeg(legLongCall);
-
-            //Commit the Model Position to the Trade Log and add a comment
-            modelPosition.CommitTrade(&quot;Roll Long Calls&quot;);
-	    }
-	}
-	
-	//downside adjustment
-	if (deltas &gt; (longPuts.Qty * 10)) 
-		{
-		WriteLog(&quot;deltas &gt; (longPuts.Qty * 10)&quot;);
-		WriteLog(deltas + &quot;&gt;&quot; + (longPuts.Qty * 10));
-		
-		if (callWidth &lt; 20) {
-		
-		 //Roll calls back if we&apos;ve narrowed put width
-            var modelPosition=NewModelPosition(); 
-        	var closingLeg=longCalls.CreateClosingModelLeg();
-			modelPosition.AddLeg(closingLeg);
-			var legLongCall = CreateModelLeg(BUY, longCalls.Qty, GetOptionByDelta(Call, (longCalls.Delta - deltaAdd), backMonthExpiration), &quot;LongCall-&quot; + Position.Adjustments);
-        	modelPosition.AddLeg(legLongCall);
-
-            //Commit the Model Position to the Trade Log and add a comment
-            modelPosition.CommitTrade(&quot;Roll Long Calls Back Up&quot;);
-			
-	    } else {
-				
-		 //else roll puts up
-            var modelPosition=NewModelPosition(); 
-        	var closingLeg=longPuts.CreateClosingModelLeg();
-			modelPosition.AddLeg(closingLeg);
-			WriteLog(&quot;Put delta &quot; + longPuts.Delta + &quot; deltas to subtract &quot; + deltaSubtract + &quot; new delta is &quot; + (longPuts.Delta - deltaSubtract));
-			var legLongPut = CreateModelLeg(BUY, longPuts.Qty, GetOptionByDelta(Put, (longPuts.Delta - deltaSubtract), backMonthExpiration), &quot;LongPut-&quot; + Position.Adjustments);
-        	modelPosition.AddLeg(legLongPut);
-
-            //Commit the Model Position to the Trade Log and add a comment
-            modelPosition.CommitTrade(&quot;Roll Long Puts&quot;);
-	    }
-	}
-		
-	//sell 1/2 of the spreads on the side being pressed when 1/2 way between the short and expiration BE
-	//don&apos;t want this being triggered to to sag in the middle, so only beyond our longs
-	var shortCall = Position.GetLegByName(&quot;ShortCall*&quot;);
-	var shortPut = Position.GetLegByName(&quot;ShortPut*&quot;);
-	var longCall = Position.GetLegByName(&quot;LongCall*&quot;);
-	var longPut = Position.GetLegByName(&quot;LongPut*&quot;);
-	if (Underlying.Last &gt;=  shortCall.Strike) {
-		double upperMidPoint = (shortCall.Strike + Position.Expiration().UpperBE) / 2;
-		if (Underlying.Last &gt;= upperMidPoint) {
-			//only remove 1/2 the spreads one time	
-			if (shortPut.Qty == shortCall.Qty) {
-	            WriteLog(&quot;upperMidPoint=&quot; + upperMidPoint);
-				var modelPosition=NewModelPosition(); 
-				var closingShortLeg = shortCall.CreateClosingModelLeg();
-				modelPosition.AddLeg(closingShortLeg);
-	        	var openingShortLeg=CreateModelLeg(SELL, (int) shortCall.Qty/2, GetOptionByDelta(Call, (shortCall.Strike), nearMonthExpiration), &quot;ShortCall-&quot; + Position.Adjustments);
-				modelPosition.AddLeg(openingShortLeg);
-				var closingLongLeg = longCall.CreateClosingModelLeg();
-				modelPosition.AddLeg(closingLongLeg);
-				var openingLongLeg = CreateModelLeg(BUY, (int) longCall.Qty/2,  GetOptionByDelta(Call, (longCall.Strike), backMonthExpiration), &quot;LongCall-&quot; + Position.Adjustments);
-	        	modelPosition.AddLeg(openingLongLeg);
-	            //Commit the Model Position to the Trade Log and add a comment
-	            modelPosition.CommitTrade(&quot;Close 1/2 the calls&quot;);
-			}
-		}
-	}
-	if (Underlying.Last &lt;=  shortPut.Strike) {
-		double lowerMidPoint = (shortPut.Strike + Position.Expiration().LowerBE) / 2;
-		if (Underlying.Last &lt;= lowerMidPoint) {
-			//only remove 1/2 the spreads one time
-			if (shortPut.Qty == shortCall.Qty) {
-	            WriteLog(&quot;lowerMidPoint=&quot; + lowerMidPoint);
-				var modelPosition=NewModelPosition();
-				var closingShortLeg = shortPut.CreateClosingModelLeg();
-				modelPosition.AddLeg(closingShortLeg);
-	        	var openingShortLeg=CreateModelLeg(SELL, (int) shortPut.Qty/2, GetOptionByDelta(Put, (shortPut.Strike), nearMonthExpiration), &quot;ShortPut-&quot; + Position.Adjustments);
-				modelPosition.AddLeg(openingShortLeg);
-				var closingLongLeg = longPut.CreateClosingModelLeg();
-				modelPosition.AddLeg(closingLongLeg);
-				var openingLongLeg = CreateModelLeg(BUY, (int) longPut.Qty/2, GetOptionByDelta(Put, (longPut.Strike), backMonthExpiration), &quot;LongPut-&quot; + Position.Adjustments);
-	        	modelPosition.AddLeg(openingLongLeg);
-
-	            //Commit the Model Position to the Trade Log and add a comment
-	            modelPosition.CommitTrade(&quot;Close 1/2 the puts&quot;);
-			}
-		}
-	}
-	
-
-} catch(Exception ex) {
-    WriteLog(&quot;Try/Catch hit in adjustment block&quot;);
-}
-	
 //------- E X I T   R U L E S -------
 try {
     if(Position.IsOpen == true) {

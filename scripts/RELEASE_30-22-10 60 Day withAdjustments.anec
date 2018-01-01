@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="iso-8859-1" ?>
 
 <AlgoNETExplorer>
-    <StrategyCode StrategyName="RELEASE_50-35-20 60 Day withAdjustments" Language="C# .NET">
+    <StrategyCode StrategyName="RELEASE_30-22-10 60 Day withAdjustments" Language="C# .NET">
         <TickEventCode>//
 // Copyright THJ Systems Ltd
 //
@@ -20,21 +20,22 @@ if (Backtest.UnderlyingSymbol == &quot;SPX&quot;) {
  Backtest.Configuration.PriceValidation.PositionPercChange=5;
 }
 
+
 //------- O P T I M I Z A T I O N   P A R A M E T E R S -------
 int PARAM_NearMonth = 60;
 int PARAM_FarMonth = 85;
 int PARAM_ProfitTarget = 7;
 int PARAM_ProfitTargetAfterHedge = 3;
 int PARAM_MaxLoss = 10;
-int PARAM_ExitDTE = 30;
+int PARAM_ExitDTE = 15;
 int PARAM_DeltaAdjustTriggerOffset = 35;
 int PARAM_AdjustDownMoveLimit = 99;
 int PARAM_MaxAdjustments=5;
 
 //strikes we are using for the butterfly
-int PARAM_LongLegUpper = -50;
-int PARAM_ShortLeg = -35;
-int PARAM_LongLegLower = -16;
+int PARAM_LongLegUpper = -30;
+int PARAM_ShortLeg = -22;
+int PARAM_LongLegLower = -10;
 
 //max underlying IV when initiating a trade
 int PARAM_MaxUnderlyingIV = 25;
@@ -64,7 +65,7 @@ if (Position.IsOpen == true) {
 
 //Do not take action before 9:00 AM
 TimeSpan currentTime = Backtest.TradingDateTime.ToLocalTime().TimeOfDay; //Convert from UTC to localtime
-TimeSpan startTime = new TimeSpan(9, 0, 0); //9:00 AM
+TimeSpan startTime = new TimeSpan(8, 50, 0); //9:00 AM
 TimeSpan endTime = new TimeSpan(15, 5, 0); //3:00 PM
 
 //scalable margin - add 50% of PnL to size up
@@ -187,11 +188,11 @@ try {
 
 	//Create a new Model Position and build an ATM Butterfly using the expiration cycles we found above.
 	var modelPosition = NewModelPosition();
-	var legAsym1 = CreateModelLeg(BUY, 1, GetOptionByDelta(Put, -50, monthExpiration), &quot;LongLegUpper-&quot; + Position.Adjustments);
+	var legAsym1 = CreateModelLeg(BUY, 1, GetOptionByDelta(Put, PARAM_LongLegUpper, monthExpiration), &quot;LongLegUpper-&quot; + Position.Adjustments);
 	modelPosition.AddLeg(legAsym1);
-	var legAsym2 = CreateModelLeg(SELL, 2, GetOptionByDelta(Put, -35, monthExpiration), &quot;ShortLeg-&quot; + Position.Adjustments);
+	var legAsym2 = CreateModelLeg(SELL, 2, GetOptionByDelta(Put, PARAM_ShortLeg, monthExpiration), &quot;ShortLeg-&quot; + Position.Adjustments);
 	modelPosition.AddLeg(legAsym2);
-	var legAsym3 = CreateModelLeg(BUY, 1, GetOptionByDelta(Put, -16, monthExpiration), &quot;LongLegLower-&quot; + Position.Adjustments);
+	var legAsym3 = CreateModelLeg(BUY, 1, GetOptionByDelta(Put, PARAM_LongLegLower, monthExpiration), &quot;LongLegLower-&quot; + Position.Adjustments);
 	modelPosition.AddLeg(legAsym3);
 	modelPosition.CommitTrade(&quot;Buy 50-35-20 Butterfly 1 lot&quot;);
 
@@ -226,9 +227,10 @@ try {
   if ((currentTime &gt;= startTime) &amp;&amp; (currentTime &lt;= endTime)) {
 
    //Check if Short Strike Delta&apos;s within tollerance
-   var origShortLeg = Position.GetLegByName(&quot;ShortLeg*&quot;);
-   if (origShortLeg != null) {
-	double delta = Math.Abs(origShortLeg.Delta);
+   var origLongLegUpper = Position.GetLegByName(&quot;LongLegUpper*&quot;);
+   if (origLongLegUpper != null) {
+	double delta = Math.Abs(origLongLegUpper.Delta);
+	//double delta = Position.Delta;
 	//Find the month expiration cycle
 	var monthExpiration = GetExpiryByDTE(PARAM_NearMonth, PARAM_FarMonth);
 	if (monthExpiration == null) {
@@ -294,7 +296,13 @@ if (Position.IsOpen == true) {
  
   double PnL = 0;
   if (Backtest.Tag != null) { PnL = (double) Backtest.Tag;}
-	
+
+   // get rid of noise around 8/24/2015
+  if (Backtest.TradingDateTime.Date.ToString() == &quot;8/21/2015 12:00:00 AM&quot;) {
+   WriteLog(&quot;Backtest.TradingDateTime.Date: &quot; + Backtest.TradingDateTime.Date.Date);
+   Position.Close(&quot;Closing for 8/24/2015 data issues&quot;);
+  }
+  
   //Check Profit Target
   if (Position.PnLPercentage &gt;= PARAM_ProfitTarget) {
 	Position.Close(&quot;Hit Profit Target&quot;);

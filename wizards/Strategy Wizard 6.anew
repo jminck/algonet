@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="iso-8859-1" ?>
+
+<AlgoNETExplorer>
+    <StrategyWizard StrategyName="Strategy Wizard 6" StrategyType="Calendar">
+        <Description />
+        <NumberOfContracts>1</NumberOfContracts>
+        <EntryConditions>
+            <DTE DTE1="9" DTE2="11" />
+            <UnderlyingMovementSD Checked="False" SD1="-1" SD2="1" Days="5" />
+            <VolatilitySkew Checked="False" Skew1="-1" Skew2="3" />
+            <TradeAction Transaction="Buy" Type="Put Calendar" />
+        </EntryConditions>
+        <AdjustmentConditions>
+            <UnderlyingMoveUp Checked="True" Value="75" Action="Add another ATM" />
+            <UnderlyingMoveDown Checked="True" Value="75" Action="Add another ATM" />
+            <IVSkewChange Checked="False" Negative="-2" Positive="1" Action="Close Calendar" />
+        </AdjustmentConditions>
+        <ExitConditions>
+            <ProfitTarget Checked="True" Value="10" />
+            <MaxLoss Checked="True" Value="12" />
+            <DTE Checked="True" Value="21" />
+            <MaxAdjustments Checked="True" Value="5" />
+        </ExitConditions>
+    </StrategyWizard>
+</AlgoNETExplorer>
